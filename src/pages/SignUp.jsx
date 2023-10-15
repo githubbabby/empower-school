@@ -2,6 +2,15 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AiFillEyeInvisible, AiFillEye } from "react-icons/ai";
 import OAuth from "../components/OAuth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { db } from "../firebase.config";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -11,15 +20,41 @@ export default function SignUp() {
     password: "",
   });
   const { name, email, password } = formData;
+  const navigate = useNavigate();
   function onChange(e) {
     setFormData((prevState) => ({
       ...prevState,
       [e.target.id]: e.target.value,
     }));
   }
+  async function onSubmit(e) {
+    e.preventDefault();
+
+    try {
+      const auth = getAuth();
+      const userCredentials = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(auth.currentUser, {
+        displayName: name,
+      });
+      const user = userCredentials.user;
+      const formDataCopy = { ...formData };
+      delete formDataCopy.password;
+      formDataCopy.timestamp = serverTimestamp();
+
+      await setDoc(doc(db, "users", user.uid), formDataCopy);
+      toast.success("Account created successfully.");
+      navigate("/");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
   return (
     <section>
-      <h1 className="mt-6 text-center text-3xl font-extrabold">Login</h1>
+      <h1 className="mt-6 text-center text-3xl font-extrabold">Sign Up</h1>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center px-6 py-11">
         <div className="mb-12 md:mb-6 md:w-[67%] lg:w-[50%]">
           <img
@@ -29,23 +64,26 @@ export default function SignUp() {
           />
         </div>
         <div className="w-full md:w-[67%] lg:ml-20 lg:w-[40%]">
-          <form>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={onChange}
-              placeholder="Email"
-              className="mb-6 w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
-            />
+          <form onSubmit={onSubmit}>
             <input
               type="text"
               id="name"
               value={name}
               onChange={onChange}
               placeholder="Name"
+              required
               className="mb-6 w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
             />
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={onChange}
+              placeholder="Email"
+              required
+              className="mb-6 w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
+            />
+
             <div className="relative mb-6">
               <input
                 type={showPassword ? "text" : "password"}
@@ -53,6 +91,7 @@ export default function SignUp() {
                 value={password}
                 onChange={onChange}
                 placeholder="Password"
+                required
                 className="w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
               />
               {showPassword ? (
@@ -77,14 +116,7 @@ export default function SignUp() {
                   Sign In
                 </Link>
               </p>
-              <p>
-                <Link
-                  to="/forgot-password"
-                  className="transition duration-200 ease-in-out hover:text-blue-800 hover:underline"
-                >
-                  Reset Password
-                </Link>
-              </p>
+              <p></p>
             </div>
             <button
               className="w-full rounded bg-red-600 px-4 py-2 font-medium uppercase text-white shadow-lg transition duration-200 ease-in-out hover:bg-red-700 hover:shadow-xl active:bg-red-900"
