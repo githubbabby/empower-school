@@ -24,7 +24,6 @@ export default function OAuth() {
           email: user.email,
           timestamp: serverTimestamp(),
         });
-        toast.success("Account created successfully.");
         navigate("/");
       } else {
         toast.error("User already exists.");
