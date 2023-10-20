@@ -18,15 +18,27 @@ export default function SignUp() {
     name: "",
     email: "",
     password: "",
+    role: "donor", // Default role is 'donor'
   });
-  const { name, email, password } = formData;
+  const { name, email, password, role } = formData;
   const navigate = useNavigate();
+
   function onChange(e) {
-    setFormData((prevState) => ({
-      ...prevState,
-      [e.target.id]: e.target.value,
-    }));
+    if (e.target.type === "radio") {
+      // If the change event is from a radio button, update the role in the form data.
+      setFormData((prevState) => ({
+        ...prevState,
+        role: e.target.value,
+      }));
+    } else {
+      // For other input fields (name, email, password), update them as before.
+      setFormData((prevState) => ({
+        ...prevState,
+        [e.target.id]: e.target.value,
+      }));
+    }
   }
+
   async function onSubmit(e) {
     e.preventDefault();
 
@@ -52,6 +64,7 @@ export default function SignUp() {
       toast.error(error.message);
     }
   }
+
   return (
     <section>
       <h1 className="mt-6 text-center text-3xl font-extrabold">Sign Up</h1>
@@ -106,6 +119,33 @@ export default function SignUp() {
                 />
               )}
             </div>
+
+            <div className="mb-4 flex justify-between">
+              <label>
+                <input
+                  type="radio"
+                  id="donor"
+                  name="role"
+                  value="donor"
+                  checked={role === "donor"}
+                  onChange={onChange}
+                />
+                Soy un donante
+              </label>
+
+              <label>
+                <input
+                  type="radio"
+                  id="schoolRep"
+                  name="role"
+                  value="schoolRep"
+                  checked={role === "schoolRep"}
+                  onChange={onChange}
+                />
+                Soy un representante de escuela
+              </label>
+            </div>
+
             <div className="flex justify-between whitespace-nowrap text-sm sm:text-lg">
               <p className="mb-6">
                 Have an account?{" "}
