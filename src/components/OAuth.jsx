@@ -16,6 +16,7 @@ export default function OAuth() {
       const user = result.user;
 
       // check if user uid is in the "users" collection, if not, add it
+      // TODO: add role to user
       const userRef = doc(db, "users", user.uid);
       const docSnap = await getDoc(userRef);
       if (!docSnap.exists()) {
@@ -24,12 +25,10 @@ export default function OAuth() {
           email: user.email,
           timestamp: serverTimestamp(),
         });
-        navigate("/");
-      } else {
-        toast.error("User already exists.");
       }
+      navigate("/");
     } catch (error) {
-      console.log(error);
+      toast.error(error.message);
     }
   }
 
