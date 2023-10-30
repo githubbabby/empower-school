@@ -6,7 +6,7 @@ import { db } from "../firebase.config";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
-export default function OAuth() {
+export default function OAuth(props) {
   const navigate = useNavigate();
   async function onGoogleClick() {
     try {
@@ -23,6 +23,7 @@ export default function OAuth() {
         await setDoc(userRef, {
           name: user.displayName,
           email: user.email,
+          role: props.role,
           timestamp: serverTimestamp(),
         });
       }

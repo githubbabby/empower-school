@@ -24,6 +24,7 @@ export default function SignUp() {
   const navigate = useNavigate();
 
   function onChange(e) {
+    // I dont think this if is really necesary, the role value will be updated anyway in second setFormData
     if (e.target.type === "radio") {
       // If the change event is from a radio button, update the role in the form data.
       setFormData((prevState) => ({
@@ -167,7 +168,7 @@ export default function SignUp() {
             <div className="my-4 flex items-center before:flex-1 before:border-t before:border-gray-300 after:flex-1 after:border-t after:border-gray-300">
               <p className="mx-4 text-center font-semibold">OR</p>
             </div>
-            <OAuth />
+            <OAuth role={role} />
           </form>
         </div>
       </div>
