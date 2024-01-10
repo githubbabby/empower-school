@@ -1,8 +1,22 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getAuth } from "firebase/auth";
+
 export default function Header() {
+  const [pageState, setPageState] = useState("Sign in");
   const location = useLocation();
   const navigate = useNavigate();
-  function pathMathRoute(route) {
+  const auth = getAuth();
+  useEffect(() => {
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        setPageState("Profile");
+      } else {
+        setPageState("Sign in");
+      }
+    });
+  });
+  function pathMatchRoute(route) {
     if (route === location.pathname) {
       return true;
     }
@@ -22,7 +36,7 @@ export default function Header() {
           <ul className="flex space-x-10">
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold  ${
-                pathMathRoute("/")
+                pathMatchRoute("/")
                   ? "border-b-red-500 text-black"
                   : "border-b-transparent text-gray-500"
               }`}
@@ -32,7 +46,7 @@ export default function Header() {
             </li>
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${
-                pathMathRoute("/schools")
+                pathMatchRoute("/schools")
                   ? "border-b-red-500 text-black"
                   : "border-b-transparent text-gray-500"
               }`}
@@ -42,13 +56,12 @@ export default function Header() {
             </li>
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${
-                pathMathRoute("/sign-in")
-                  ? "border-b-red-500 text-black"
-                  : "border-b-transparent text-gray-500"
+                (pathMatchRoute("/sign-in") || pathMatchRoute("/profile")) &&
+                "border-b-red-500 text-black"
               }`}
-              onClick={() => navigate("/sign-in")}
+              onClick={() => navigate("/profile")}
             >
-              Sign In
+              {pageState}
             </li>
           </ul>
         </div>
