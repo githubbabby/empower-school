@@ -22,7 +22,7 @@ export default function Header() {
     }
   }
   return (
-    <div className="sticky top-0 z-50 border-b bg-red-100 shadow-sm">
+    <div className="sticky top-0 z-40 border-b bg-red-100 shadow-sm">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-3">
         <div>
           <img
