@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase.config";
 import { doc, updateDoc } from "firebase/firestore";
+import { Link } from "react-router-dom";
 
 export default function Profile() {
   const auth = getAuth();
@@ -76,7 +77,7 @@ export default function Profile() {
               id="email"
               value={email}
               disabled
-              className="mb-6 w-full rounded border border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
+              className="mb-6 w-full rounded border border-transparent bg-gray-200 px-4 py-2 text-xl text-gray-700 transition ease-in-out"
             />
             <div className="mb-6 flex justify-between whitespace-nowrap text-sm sm:text-lg">
               <p className="flex items-center">
@@ -99,6 +100,17 @@ export default function Profile() {
               </p>
             </div>
           </form>
+          <button
+            type="submit"
+            className="w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
+          >
+            <Link
+              to="/create-school"
+              className="flex items-center justify-center"
+            >
+              Registrar escuela
+            </Link>
+          </button>
         </div>
       </section>
     </>
