@@ -2,18 +2,33 @@ import React, { useState } from "react";
 import AsyncSelect from "react-select/async";
 import { db } from "../firebase.config";
 import { toast } from "react-toastify";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  addDoc,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
+import { storeImage } from "../imageUtils";
+import { getAuth } from "firebase/auth";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import Spinner from "../components/Spinner";
+import { useNavigate } from "react-router-dom";
 
 export default function CreateSchool() {
+  const navigate = useNavigate();
+  const auth = getAuth();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
     direccion: "",
     distrito: "",
     departamento: "",
     barrio: "",
-    latitude: -25.306166036627506,
-    longitude: -57.53814697265626,
+    latitud: -25.306166036627506,
+    longitud: -57.53814697265626,
+    imagenes: [],
   });
   const {
     nombre,
@@ -21,8 +36,9 @@ export default function CreateSchool() {
     distrito,
     departamento,
     barrio,
-    latitude,
-    longitude,
+    latitud,
+    longitud,
+    imagenes,
   } = formData;
 
   const loadOptions = async (inputValue) => {
@@ -58,20 +74,60 @@ export default function CreateSchool() {
   };
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
+    if (e.target.files) {
+      setFormData({ ...formData, imagenes: e.target.files });
+    }
   };
 
-  const [markerPosition, setMarkerPosition] = useState([latitude, longitude]);
+  const [markerPosition, setMarkerPosition] = useState([latitud, longitud]);
 
   const handleMarkerDragEnd = (e) => {
     const { lat, lng } = e.target.getLatLng();
     setMarkerPosition([lat, lng]);
-    setFormData({ ...formData, latitude: lat, longitude: lng });
+    setFormData({ ...formData, latitud: lat, longitud: lng });
   };
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
-    console.log(formData);
-  };
+    setLoading(true);
+
+    if (imagenes.length > 6) {
+      setLoading(false);
+      toast.error("Solo se pueden subir 6 imagenes");
+      return;
+    }
+
+    const imgUrls = await Promise.all(
+      Array.from(imagenes).map((imagen) => storeImage("escuelas", imagen))
+    ).catch((error) => {
+      setLoading(false);
+      console.error(error);
+      return;
+    });
+
+    const formDataCopy = {
+      ...formData,
+      imgUrls,
+      id_usuario: auth.currentUser.uid,
+      fecha_creacion: serverTimestamp(),
+    };
+    delete formDataCopy.imagenes;
+
+    try {
+      const docRef = await addDoc(collection(db, "escuelas"), formDataCopy);
+      setLoading(false);
+      toast.success("Escuela registrada con exito");
+      navigate("/");
+    } catch (error) {
+      setLoading(false);
+      console.error(error);
+      toast.error(error.message);
+    }
+  }
+
+  if (loading) {
+    return <Spinner />;
+  }
   return (
     <main className="mx-auto max-w-md px-2">
       <h1 className="mt-6 text-center text-3xl font-bold">
@@ -166,6 +222,7 @@ export default function CreateSchool() {
             onChange={onChange}
             multiple
             accept=".jpg, .jpeg, .png"
+            required
             className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
