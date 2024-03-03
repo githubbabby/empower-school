@@ -13,12 +13,14 @@ import {
 import { storeImage } from "../imageUtils";
 import { getAuth } from "firebase/auth";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { useMap } from "react-leaflet";
 import Spinner from "../components/Spinner";
 import { useNavigate } from "react-router-dom";
 
 export default function CreateSchool() {
   const navigate = useNavigate();
   const auth = getAuth();
+  const [geolocationEnabled, setGeolocationEnabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nombre: "",
@@ -65,13 +67,31 @@ export default function CreateSchool() {
       return [];
     }
   };
-  const handleDistritoChange = (selectedOption) => {
+  const handleDistritoChange = async (selectedOption) => {
+    // Fetch geolocation data from Google Geocode API
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${
+        selectedOption.label
+      },${selectedOption.departamento},Paraguay&key=${
+        import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
+      }`
+    );
+    const data = await response.json();
+
+    // Extract latitude and longitude from response data
+    const { lat, lng } = data.results[0].geometry.location;
+
+    // Update form data and marker position
     setFormData({
       ...formData,
       distrito: selectedOption.label,
       departamento: selectedOption.departamento,
+      latitud: lat,
+      longitud: lng,
     });
+    setMarkerPosition([lat, lng]);
   };
+
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
     if (e.target.files) {
@@ -86,6 +106,16 @@ export default function CreateSchool() {
     setMarkerPosition([lat, lng]);
     setFormData({ ...formData, latitud: lat, longitud: lng });
   };
+
+  function MyMap({ center }) {
+    const map = useMap();
+
+    React.useEffect(() => {
+      map.flyTo(center);
+    }, [center, map]);
+
+    return null;
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -113,11 +143,13 @@ export default function CreateSchool() {
     };
     delete formDataCopy.imagenes;
 
+    console.log(formDataCopy);
+
     try {
       const docRef = await addDoc(collection(db, "escuelas"), formDataCopy);
       setLoading(false);
       toast.success("Escuela registrada con exito");
-      navigate("/");
+      navigate(`/escuela/${docRef.id}`);
     } catch (error) {
       setLoading(false);
       console.error(error);
@@ -211,6 +243,7 @@ export default function CreateSchool() {
                 dragend: handleMarkerDragEnd,
               }}
             />
+            <MyMap center={markerPosition} />
           </MapContainer>
         </div>
         {/* Imagenes */}
@@ -222,7 +255,6 @@ export default function CreateSchool() {
             onChange={onChange}
             multiple
             accept=".jpg, .jpeg, .png"
-            required
             className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
