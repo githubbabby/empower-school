@@ -10,6 +10,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./components/PrivateRoute";
 import CreateSchool from "./pages/CreateSchool";
+import EditSchool from "./pages/EditSchool";
 
 function App() {
   return (
@@ -27,6 +28,9 @@ function App() {
           <Route path="/schools" element={<Schools />} />
           <Route path="/create-school" element={<PrivateRoute />}>
             <Route path="/create-school" element={<CreateSchool />} />
+          </Route>
+          <Route path="/edit-school" element={<PrivateRoute />}>
+            <Route path="/edit-school/:schoolId" element={<EditSchool />} />
           </Route>
         </Routes>
       </Router>

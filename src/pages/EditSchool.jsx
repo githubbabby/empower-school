@@ -1,23 +1,14 @@
-import React, { useState } from "react";
-import AsyncSelect from "react-select/async";
+import React, { useEffect, useState } from "react";
 import { db } from "../firebase.config";
 import { toast } from "react-toastify";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { storeImage } from "../imageUtils";
 import { getAuth } from "firebase/auth";
-import { MapContainer, TileLayer, Marker } from "react-leaflet";
-import { useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import Spinner from "../components/Spinner";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
-export default function CreateSchool() {
+export default function EditSchool() {
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(false);
@@ -42,54 +33,36 @@ export default function CreateSchool() {
     imagenes,
   } = formData;
 
-  const loadOptions = async (inputValue) => {
-    try {
-      if (inputValue === "") {
-        inputValue = "a";
+  const params = useParams();
+
+  useEffect(() => {
+    setLoading(true);
+    async function fetchSchool() {
+      const docRef = doc(db, "escuelas", params.schoolId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (auth.currentUser.uid !== data.id_usuario) {
+          toast.error("No tiene permisos para editar esta escuela");
+          navigate("/");
+        }
+        setFormData({
+          nombre: data.nombre,
+          direccion: data.direccion,
+          distrito: data.distrito,
+          departamento: data.departamento,
+          barrio: data.barrio,
+          latitud: data.latitud,
+          longitud: data.longitud,
+        });
+        setMarkerPosition([data.latitud, data.longitud]);
+      } else {
+        toast.error("No se encontro la escuela");
       }
-      const distritosRef = collection(db, "distritos");
-      const querySnapshot = await getDocs(
-        query(
-          distritosRef,
-          where("nombre_minus", ">=", inputValue.toLowerCase()),
-          where("nombre_minus", "<=", inputValue.toLowerCase() + "\uf8ff")
-        )
-      );
-      const distritos = querySnapshot.docs.map((doc) => ({
-        value: doc.id,
-        label: doc.data().nombre,
-        departamento: doc.data().departamento,
-      }));
-      return distritos;
-    } catch (error) {
-      toast.error(error.message);
-      return [];
+      setLoading(false);
     }
-  };
-  const handleDistritoChange = async (selectedOption) => {
-    // Fetch geolocation data from Google Geocode API
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${
-        selectedOption.label
-      },${selectedOption.departamento},Paraguay&key=${
-        import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
-      }`
-    );
-    const data = await response.json();
-
-    // Extract latitude and longitude from response data
-    const { lat, lng } = data.results[0].geometry.location;
-
-    // Update form data and marker position
-    setFormData({
-      ...formData,
-      distrito: selectedOption.label,
-      departamento: selectedOption.departamento,
-      latitud: lat,
-      longitud: lng,
-    });
-    setMarkerPosition([lat, lng]);
-  };
+    fetchSchool();
+  }, [navigate, params.schoolId, auth.currentUser.uid]);
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -145,9 +118,10 @@ export default function CreateSchool() {
     console.log(formDataCopy);
 
     try {
-      const docRef = await addDoc(collection(db, "escuelas"), formDataCopy);
+      const docRef = doc(db, "escuelas", params.schoolId);
+      await updateDoc(docRef, formDataCopy);
       setLoading(false);
-      toast.success("Escuela registrada con exito");
+      toast.success("Escuela actualizada correctamente!");
       navigate(`/edit-school/${docRef.id}`);
     } catch (error) {
       setLoading(false);
@@ -161,9 +135,7 @@ export default function CreateSchool() {
   }
   return (
     <main className="mx-auto max-w-md px-2">
-      <h1 className="mt-6 text-center text-3xl font-bold">
-        Registrar una escuela
-      </h1>
+      <h1 className="mt-6 text-center text-3xl font-bold">Editar escuela</h1>
       <form onSubmit={handleSubmit}>
         {/* Nombre */}
         <p className="mt-6 text-lg font-semibold">Nombre de la escuela</p>
@@ -189,15 +161,12 @@ export default function CreateSchool() {
         />
         {/* Distrito */}
         <p className="mt-6 text-lg font-semibold">Ciudad</p>
-        <AsyncSelect
-          type="select"
+        <input
+          type="text"
           id="distrito"
-          value={distrito.label}
-          onChange={handleDistritoChange}
-          defaultOptions
-          loadOptions={loadOptions}
-          required
-          className="mt-6"
+          value={distrito}
+          readOnly
+          className="mt-6 w-full rounded-md border border-gray-300 bg-gray-200 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-gray-500"
         />
         {/* Departamento */}
         <p className="mt-6 text-lg font-semibold">Departamento</p>
@@ -263,7 +232,7 @@ export default function CreateSchool() {
           type="submit"
           className="mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
         >
-          Registrar
+          Guardar
         </button>
       </form>
     </main>
