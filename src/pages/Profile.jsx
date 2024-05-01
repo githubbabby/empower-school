@@ -143,8 +143,10 @@ export default function Profile() {
       <div className="mx-auto mt-6 max-w-6xl px-3">
         {!loading && schools.length > 0 && (
           <>
-            <h2 className="text-center text-2xl font-semibold">Escuelas</h2>
-            <ul>
+            <h2 className="mb-6 text-center text-2xl font-semibold">
+              Mis Escuelas
+            </h2>
+            <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
               {schools.map((school) => (
                 <SchoolItem
                   key={school.id}
