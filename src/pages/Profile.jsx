@@ -1,14 +1,18 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuth, signOut, updateProfile } from "firebase/auth";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase.config";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, orderBy, updateDoc } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import SchoolItem from "../components/SchoolItem";
 
 export default function Profile() {
   const auth = getAuth();
   const navigate = useNavigate();
+  const [schools, setSchools] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: auth.currentUser.displayName,
@@ -48,6 +52,29 @@ export default function Profile() {
       toast.error(error.message);
     }
   }
+  useEffect(() => {
+    async function fetchUserSchools() {
+      try {
+        const SchoolRef = collection(db, "escuelas");
+        const q = query(
+          SchoolRef,
+          where("id_usuario", "==", auth.currentUser.uid),
+          orderBy("nombre", "asc")
+        );
+        const querySnapshot = await getDocs(q);
+        let schools = [];
+
+        querySnapshot.forEach((doc) => {
+          return schools.push({ id: doc.id, data: doc.data() });
+        });
+        setSchools(schools);
+        setLoading(false);
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
+    fetchUserSchools();
+  }, [auth.currentUser.uid]);
   return (
     <>
       <section className="mx-auto flex max-w-6xl flex-col items-center justify-center">
@@ -113,6 +140,22 @@ export default function Profile() {
           </button>
         </div>
       </section>
+      <div className="mx-auto mt-6 max-w-6xl px-3">
+        {!loading && schools.length > 0 && (
+          <>
+            <h2 className="text-center text-2xl font-semibold">Escuelas</h2>
+            <ul>
+              {schools.map((school) => (
+                <SchoolItem
+                  key={school.id}
+                  id={school.id}
+                  school={school.data}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
     </>
   );
 }

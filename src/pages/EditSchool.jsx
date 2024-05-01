@@ -110,8 +110,7 @@ export default function EditSchool() {
     const formDataCopy = {
       ...formData,
       imgUrls,
-      id_usuario: auth.currentUser.uid,
-      fecha_creacion: serverTimestamp(),
+      fecha_modificacion: serverTimestamp(),
     };
     delete formDataCopy.imagenes;
 
