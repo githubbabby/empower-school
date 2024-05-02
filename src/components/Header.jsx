@@ -3,16 +3,16 @@ import { useEffect, useState } from "react";
 import { getAuth } from "firebase/auth";
 
 export default function Header() {
-  const [pageState, setPageState] = useState("Sign in");
+  const [pageState, setPageState] = useState("...");
   const location = useLocation();
   const navigate = useNavigate();
   const auth = getAuth();
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
       if (user) {
-        setPageState("Profile");
+        setPageState("Perfil");
       } else {
-        setPageState("Sign in");
+        setPageState("Ingresar");
       }
     });
   });
@@ -42,7 +42,7 @@ export default function Header() {
               }`}
               onClick={() => navigate("/")}
             >
-              Home
+              Inicio
             </li>
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${
@@ -52,7 +52,7 @@ export default function Header() {
               }`}
               onClick={() => navigate("/schools")}
             >
-              Schools
+              Escuelas
             </li>
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${

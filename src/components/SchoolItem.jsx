@@ -1,15 +1,15 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import relativeTime from "dayjs/plugin/relativeTime";
 import dayjs from "dayjs";
 import { MdLocationPin } from "react-icons/md";
+import { FaRegTrashCan } from "react-icons/fa6";
+import { MdEdit } from "react-icons/md";
 
-export default function SchoolItem({ school, id }) {
-  dayjs.extend(relativeTime);
-
+export default function SchoolItem({ school, id, onEdit, onDelete }) {
+  if (school.eliminado) return null;
   return (
     <li className="relative m-[10px] flex flex-col items-center justify-between overflow-hidden rounded-md bg-white shadow-md transition-shadow duration-150 hover:shadow-xl">
-      <Link className="contents" to={`/edit-school/${id}`}>
+      <Link className="contents" to={`/school/${id}`}>
         <img
           className="transition-scale h-[170px] w-full object-cover duration-150 ease-in hover:scale-105"
           loading="lazy"
@@ -31,6 +31,18 @@ export default function SchoolItem({ school, id }) {
           </p>
         </div>
       </Link>
+      <button
+        onClick={() => onEdit(id)}
+        className="absolute bottom-2 right-7 p-1 text-gray-600 transition-colors duration-150 ease-in-out hover:text-gray-800"
+      >
+        <MdEdit />
+      </button>
+      <button
+        onClick={() => onDelete(id)}
+        className="absolute bottom-2 right-2 p-1 text-gray-600 transition-colors duration-150 ease-in-out hover:text-red-800"
+      >
+        <FaRegTrashCan />
+      </button>
     </li>
   );
 }
