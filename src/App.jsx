@@ -9,6 +9,7 @@ import Header from "./components/Header";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PrivateRoute from "./components/PrivateRoute";
+import School from "./pages/School";
 import CreateSchool from "./pages/CreateSchool";
 import EditSchool from "./pages/EditSchool";
 
@@ -32,6 +33,7 @@ function App() {
           <Route path="/edit-school" element={<PrivateRoute />}>
             <Route path="/edit-school/:schoolId" element={<EditSchool />} />
           </Route>
+          <Route path="/school/:schoolId" element={<School />} />
         </Routes>
       </Router>
       <ToastContainer
