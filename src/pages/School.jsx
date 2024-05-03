@@ -40,7 +40,7 @@ export default function School() {
                 const url = await getDownloadURL(imageRef);
                 const img = new Image();
                 img.src = url;
-                await img.decode(); // Wait for the image to load
+                await img.decode();
                 return {
                   src: url,
                   width: img.naturalWidth,
@@ -70,8 +70,23 @@ export default function School() {
     <div className="mx-auto mt-6 max-w-6xl px-3">
       <div>
         <PhotoAlbum
+          layout="columns"
           photos={photos}
-          layout="masonry"
+          renderPhoto={({ renderDefaultPhoto }) => (
+            <div
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                backgroundColor: "rgba(255 255 255 / .6)",
+                inset: "auto 0 0 0",
+                padding: 8,
+                margin: 3,
+                boxShadow: "5px 5px 12px rgba(0 0 0 / .5)",
+              }}
+            >
+              {renderDefaultPhoto({ wrapped: true })}
+            </div>
+          )}
           onClick={({ index }) => setIndex(index)}
         />
         <Lightbox
@@ -80,6 +95,10 @@ export default function School() {
           index={index}
           close={() => setIndex(-1)}
           plugins={[Fullscreen, Slideshow, Thumbnails, Zoom]}
+          zoom={{
+            scrollToZoom: true,
+            maxZoomPixelRatio: 2,
+          }}
         />
       </div>
     </div>
