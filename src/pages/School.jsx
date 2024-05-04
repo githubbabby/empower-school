@@ -6,6 +6,7 @@ import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
 import PhotoAlbum from "react-photo-album";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
+import { MdLocationPin } from "react-icons/md";
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -67,10 +68,38 @@ export default function School() {
   }
 
   return (
-    <div className="mx-auto mt-6 max-w-6xl px-3">
-      <div>
+    <main>
+      {/* TODO: School is the physical place and Institute can be the shifts day or night, institutes will be a collection inside the document(school) make CreateInstitute and EditInstitute components same as school but lat and long will be taken from parent document */}
+      <div className="m-4 flex max-w-6xl flex-col rounded-xl bg-white p-4 shadow-lg md:flex-row lg:mx-auto lg:space-x-5">
+        <div className="lg-[400px] h-[200px] w-full">
+          <p className="text-2xl font-bold text-[#9d4545]">{school.nombre}</p>
+          <p className="text-sm font-semibold text-gray-700">
+            {school.distrito}, {school.departamento}
+          </p>
+          {/* TODO: Add descripcion here and in the CreateSchool and EditSchool components */}
+          <div className="mt-6 flex items-center space-x-1">
+            <MdLocationPin className="h-4 w-4 text-green-600" />
+            <p className="text-sm font-semibold text-gray-700">
+              {school.direccion}
+            </p>
+          </div>
+          {school.barrio && (
+            <div className="mt-2 flex items-center space-x-1">
+              <p className="text-sm font-semibold text-gray-700">Barrio:</p>
+              <p className="text-sm font-semibold text-gray-700">
+                {school.barrio}
+              </p>
+            </div>
+          )}
+          {/* TODO: Add zona here and in the CreateSchool and EditSchool components */}
+          {/* TODO: Add teléfono here and in the CreateSchool and EditSchool components */}
+          {/* TODO: Add email here and in the CreateSchool and EditSchool components */}
+        </div>
+        <div className="lg-[400px] z-10 h-[200px] w-full overflow-x-hidden bg-blue-200"></div>
+      </div>
+      <div className="mx-auto mt-6 max-w-6xl px-3">
         <PhotoAlbum
-          layout="columns"
+          layout="masonry"
           photos={photos}
           renderPhoto={({ renderDefaultPhoto }) => (
             <div
@@ -101,6 +130,6 @@ export default function School() {
           }}
         />
       </div>
-    </div>
+    </main>
   );
 }
