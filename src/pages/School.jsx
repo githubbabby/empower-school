@@ -7,6 +7,7 @@ import Spinner from "../components/Spinner";
 import PhotoAlbum from "react-photo-album";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { MdLocationPin } from "react-icons/md";
+import { MapContainer, TileLayer, Marker } from "react-leaflet";
 
 import Lightbox from "yet-another-react-lightbox";
 import "yet-another-react-lightbox/styles.css";
@@ -95,7 +96,28 @@ export default function School() {
           {/* TODO: Add teléfono here and in the CreateSchool and EditSchool components */}
           {/* TODO: Add email here and in the CreateSchool and EditSchool components */}
         </div>
-        <div className="lg-[400px] z-10 h-[200px] w-full overflow-x-hidden bg-blue-200"></div>
+        <div className="lg-[400px] z-10 h-[400px] w-full overflow-x-hidden">
+          <MapContainer
+            center={[school.latitud, school.longitud]}
+            zoom={10}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            />
+            <Marker
+              draggable={false}
+              position={[school.latitud, school.longitud]}
+              eventHandlers={{
+                click: () => {
+                  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${school.latitud},${school.longitud}`;
+                  window.open(mapsUrl, "_blank");
+                },
+              }}
+            />
+          </MapContainer>
+        </div>
       </div>
       <div className="mx-auto mt-6 max-w-6xl px-3">
         <PhotoAlbum
