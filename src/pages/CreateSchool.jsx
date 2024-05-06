@@ -21,6 +21,8 @@ export default function CreateSchool() {
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(false);
+  const [showInstituteForm, setShowInstituteForm] = useState(false);
+
   const [formData, setFormData] = useState({
     nombre: "",
     direccion: "",
@@ -30,6 +32,10 @@ export default function CreateSchool() {
     latitud: -25.306166036627506,
     longitud: -57.53814697265626,
     imagenes: [],
+  });
+  const [institute, setInstitute] = useState({
+    nombre_instituto: "",
+    turno: "",
   });
   const {
     nombre,
@@ -98,6 +104,10 @@ export default function CreateSchool() {
     }
   };
 
+  const handleInstituteChange = (e) => {
+    setInstitute({ ...institute, [e.target.id]: e.target.value });
+  };
+
   const [markerPosition, setMarkerPosition] = useState([latitud, longitud]);
 
   const handleMarkerDragEnd = (e) => {
@@ -115,6 +125,10 @@ export default function CreateSchool() {
 
     return null;
   }
+
+  const handleAddInstituteClick = () => {
+    setShowInstituteForm(true);
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -142,12 +156,17 @@ export default function CreateSchool() {
     };
     delete formDataCopy.imagenes;
 
-    console.log(formDataCopy);
-
     try {
       const docRef = await addDoc(collection(db, "escuelas"), formDataCopy);
+      if (showInstituteForm) {
+        await addDoc(collection(docRef, "institutos"), {
+          ...institute,
+          id_usuario: auth.currentUser.uid,
+          fecha_creacion: serverTimestamp(),
+        });
+      }
       setLoading(false);
-      toast.success("Escuela registrada con exito");
+      toast.success("Establecimiento registrado con exito");
       navigate(`/edit-school/${docRef.id}`);
     } catch (error) {
       setLoading(false);
@@ -162,11 +181,11 @@ export default function CreateSchool() {
   return (
     <main className="mx-auto max-w-md px-2">
       <h1 className="mt-6 text-center text-3xl font-bold">
-        Registrar una escuela
+        Registrar un Establecimiento
       </h1>
       <form onSubmit={handleSubmit}>
         {/* Nombre */}
-        <p className="mt-6 text-lg font-semibold">Nombre de la escuela</p>
+        <p className="mt-6 text-lg font-semibold">Nombre del Establecimiento</p>
         <input
           type="text"
           id="nombre"
@@ -176,8 +195,43 @@ export default function CreateSchool() {
           minLength={3}
           className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {!showInstituteForm && (
+          <button
+            type="button"
+            onClick={handleAddInstituteClick}
+            className="mt-6 rounded-md bg-red-700 px-3 py-2 text-white"
+          >
+            ¿Quieres agregar una Institucion?
+          </button>
+        )}
+        {showInstituteForm && (
+          <>
+            {/* Nombre */}
+            <p className="mt-6 text-lg font-semibold">Nombre del Instituto</p>
+            <input
+              type="text"
+              id="nombre_instituto"
+              value={institute.nombre_instituto}
+              onChange={handleInstituteChange}
+              required
+              minLength={3}
+              className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {/* Turno */}
+            <p className="mt-6 text-lg font-semibold">Turno</p>
+            <input
+              id="turno"
+              value={institute.turno}
+              onChange={handleInstituteChange}
+              className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+            ></input>
+          </>
+        )}
+
         {/* Direccion */}
-        <p className="mt-6 text-lg font-semibold">Direccion de la escuela</p>
+        <p className="mt-6 text-lg font-semibold">
+          Direccion del Establecimiento
+        </p>
         <input
           type="text"
           id="direccion"
@@ -220,10 +274,10 @@ export default function CreateSchool() {
         />
         {/* Mapa */}
         <p className="mt-6 text-lg font-semibold">
-          Por favor marque la escuela en el mapa (arrastre el marcador
+          Por favor marque el Establecimiento en el mapa (arrastre el marcador
           manteniendo apretado el boton izquierdo del mouse para ubicar la
-          escuela exactamente en el mapa. Puede usar la rueda del mouse para
-          hacer zoom en el mapa.)
+          Establecimiento exactamente en el mapa. Puede usar la rueda del mouse
+          para hacer zoom en el mapa.)
         </p>
         <div className="mt-6 h-96 w-full rounded-md bg-gray-300">
           <MapContainer
@@ -247,7 +301,7 @@ export default function CreateSchool() {
         </div>
         {/* Imagenes */}
         <div className="mb-6">
-          <p className="text-lg font-semibold">Imagenes de la escuela</p>
+          <p className="text-lg font-semibold">Imagenes del Establecimiento</p>
           <input
             type="file"
             id="imagenes"
