@@ -21,7 +21,6 @@ export default function CreateSchool() {
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(false);
-  const [showInstituteForm, setShowInstituteForm] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: "",
@@ -33,10 +32,24 @@ export default function CreateSchool() {
     longitud: -57.53814697265626,
     imagenes: [],
   });
-  const [institute, setInstitute] = useState({
-    nombre_instituto: "",
-    turno: "",
-  });
+  const [institutes, setInstitutes] = useState([{}]);
+
+  const handleAddInstitute = () => {
+    setInstitutes([...institutes, {}]);
+  };
+
+  const handleRemoveInstitute = (index) => {
+    const newInstitutes = [...institutes];
+    newInstitutes.splice(index, 1);
+    setInstitutes(newInstitutes);
+  };
+
+  const handleInstituteChange = (index, event) => {
+    const newInstitutes = [...institutes];
+    newInstitutes[index][event.target.name] = event.target.value;
+    setInstitutes(newInstitutes);
+  };
+
   const {
     nombre,
     direccion,
@@ -104,10 +117,6 @@ export default function CreateSchool() {
     }
   };
 
-  const handleInstituteChange = (e) => {
-    setInstitute({ ...institute, [e.target.id]: e.target.value });
-  };
-
   const [markerPosition, setMarkerPosition] = useState([latitud, longitud]);
 
   const handleMarkerDragEnd = (e) => {
@@ -125,10 +134,6 @@ export default function CreateSchool() {
 
     return null;
   }
-
-  const handleAddInstituteClick = () => {
-    setShowInstituteForm(true);
-  };
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -158,12 +163,14 @@ export default function CreateSchool() {
 
     try {
       const docRef = await addDoc(collection(db, "escuelas"), formDataCopy);
-      if (showInstituteForm) {
-        await addDoc(collection(docRef, "institutos"), {
-          ...institute,
-          id_usuario: auth.currentUser.uid,
-          fecha_creacion: serverTimestamp(),
-        });
+      if (institutes.length > 0) {
+        for (const institute of institutes) {
+          await addDoc(collection(db, "escuelas", docRef.id, "institutos"), {
+            ...institute,
+            id_usuario: auth.currentUser.uid,
+            fecha_creacion: serverTimestamp(),
+          });
+        }
       }
       setLoading(false);
       toast.success("Establecimiento registrado con exito");
@@ -179,7 +186,7 @@ export default function CreateSchool() {
     return <Spinner />;
   }
   return (
-    <main className="mx-auto max-w-md px-2">
+    <main className="mx-auto px-2 md:max-w-3xl lg:max-w-5xl">
       <h1 className="mt-6 text-center text-3xl font-bold">
         Registrar un Establecimiento
       </h1>
@@ -195,38 +202,49 @@ export default function CreateSchool() {
           minLength={3}
           className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        {!showInstituteForm && (
-          <button
-            type="button"
-            onClick={handleAddInstituteClick}
-            className="mt-6 rounded-md bg-red-700 px-3 py-2 text-white"
-          >
-            ¿Quieres agregar una Institucion?
-          </button>
-        )}
-        {showInstituteForm && (
-          <>
-            {/* Nombre */}
-            <p className="mt-6 text-lg font-semibold">Nombre del Instituto</p>
-            <input
-              type="text"
-              id="nombre_instituto"
-              value={institute.nombre_instituto}
-              onChange={handleInstituteChange}
-              required
-              minLength={3}
-              className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {/* Turno */}
-            <p className="mt-6 text-lg font-semibold">Turno</p>
-            <input
-              id="turno"
-              value={institute.turno}
-              onChange={handleInstituteChange}
-              className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-            ></input>
-          </>
-        )}
+
+        {institutes.map((institute, index) => (
+          <div key={index}>
+            <div className="mt-6 rounded-lg bg-white px-9 py-6 shadow-lg">
+              <div className="mx-auto flex max-w-6xl items-center justify-between">
+                <p className="text-lg font-semibold">Nombre del Instituto</p>
+                <button
+                  className="rounded-md bg-red-700 px-3 py-2 text-white focus:bg-red-500 focus:outline-none"
+                  type="button"
+                  onClick={() => handleRemoveInstitute(index)}
+                >
+                  Remover Institucion
+                </button>
+              </div>
+              <input
+                type="text"
+                name="nombre_instituto"
+                value={institute.nombre_instituto || ""}
+                onChange={(event) => handleInstituteChange(index, event)}
+                minLength={3}
+                required
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="mt-6 text-lg font-semibold">Turno</p>
+              <input
+                type="text"
+                name="turno"
+                value={institute.turno || ""}
+                onChange={(event) => handleInstituteChange(index, event)}
+                minLength={3}
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        ))}
+
+        <button
+          className="mt-9 rounded-md bg-green-700 px-3 py-2 text-white focus:bg-green-500 focus:outline-none"
+          type="button"
+          onClick={handleAddInstitute}
+        >
+          Añadir Institucion
+        </button>
 
         {/* Direccion */}
         <p className="mt-6 text-lg font-semibold">
@@ -315,7 +333,7 @@ export default function CreateSchool() {
         {/* Submit */}
         <button
           type="submit"
-          className="mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
+          className="mb-6 mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
         >
           Registrar
         </button>
