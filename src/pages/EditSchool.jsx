@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  deleteDoc,
   addDoc,
   serverTimestamp,
   collection,
@@ -44,6 +45,7 @@ export default function EditSchool() {
 
   const [institutes, setInstitutes] = useState([{}]);
   const [originalInstitutes, setOriginalInstitutes] = useState([]);
+  const [deletedInstitutes, setDeletedInstitutes] = useState([]);
 
   const params = useParams();
 
@@ -100,10 +102,13 @@ export default function EditSchool() {
   };
 
   const handleAddInstitute = () => {
-    setInstitutes([...institutes, {}]);
+    setInstitutes([...institutes, { nombre_instituto: "", turno: "" }]);
   };
 
-  const handleRemoveInstitute = (index) => {
+  const handleRemoveInstitute = (instituteId, index) => {
+    if (instituteId) {
+      setDeletedInstitutes([...deletedInstitutes, instituteId]);
+    }
     const newInstitutes = [...institutes];
     newInstitutes.splice(index, 1);
     setInstitutes(newInstitutes);
@@ -161,18 +166,19 @@ export default function EditSchool() {
     };
     delete formDataCopy.imagenes;
 
-    console.log(formDataCopy);
-
     try {
       const docRef = doc(db, "escuelas", params.schoolId);
       await updateDoc(docRef, formDataCopy);
+
       const institutesRef = collection(
         db,
         "escuelas",
         params.schoolId,
         "institutos"
       );
+
       const batch = [];
+
       institutes.forEach((institute) => {
         try {
           if (institute.uid) {
@@ -212,6 +218,23 @@ export default function EditSchool() {
           );
         }
       });
+      if (deletedInstitutes.length > 0) {
+        deletedInstitutes.forEach((instituteId) => {
+          console.log("Deleting institute: ", instituteId);
+          try {
+            const instituteRef = doc(
+              db,
+              "escuelas",
+              params.schoolId,
+              "institutos",
+              instituteId
+            );
+            batch.push(deleteDoc(instituteRef));
+          } catch (error) {
+            console.error(`Error deleting institute: ${instituteId}`, error);
+          }
+        });
+      }
 
       try {
         await Promise.all(batch);
@@ -256,7 +279,7 @@ export default function EditSchool() {
                   <button
                     className="rounded-md bg-red-700 px-3 py-2 text-white focus:bg-red-500 focus:outline-none"
                     type="button"
-                    onClick={() => handleRemoveInstitute(index)}
+                    onClick={() => handleRemoveInstitute(institute.uid, index)}
                   >
                     Remover Institucion
                   </button>

@@ -59,7 +59,7 @@ export default function Profile() {
         const q = query(
           SchoolRef,
           where("id_usuario", "==", auth.currentUser.uid),
-          orderBy("nombre", "asc")
+          orderBy("fecha_creacion", "desc")
         );
         const querySnapshot = await getDocs(q);
         let schools = [];
