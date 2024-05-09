@@ -12,6 +12,8 @@ import PrivateRoute from "./components/PrivateRoute";
 import School from "./pages/School";
 import CreateSchool from "./pages/CreateSchool";
 import EditSchool from "./pages/EditSchool";
+import CreateListing from "./pages/CreateListing";
+import EditListing from "./pages/EditListing";
 
 function App() {
   return (
@@ -34,6 +36,12 @@ function App() {
             <Route path="/edit-school/:schoolId" element={<EditSchool />} />
           </Route>
           <Route path="/school/:schoolId" element={<School />} />
+          <Route path="/create-listing" element={<PrivateRoute />}>
+            <Route path="/create-listing" element={<CreateListing />} />
+          </Route>
+          <Route path="/edit-listing" element={<PrivateRoute />}>
+            <Route path="/edit-listing/:listingId" element={<EditListing />} />
+          </Route>
         </Routes>
       </Router>
       <ToastContainer
