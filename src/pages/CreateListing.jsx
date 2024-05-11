@@ -1,18 +1,12 @@
 import React, { useState } from "react";
 import { db } from "../firebase.config";
 import { toast } from "react-toastify";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  query,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import Spinner from "../components/Spinner";
 import { useNavigate } from "react-router-dom";
 import Select from "react-select";
+import { breakfastlunchItems } from "../datasets/breakfastlunchItems";
 
 export default function CreateListing() {
   const navigate = useNavigate();
@@ -43,55 +37,6 @@ export default function CreateListing() {
 
   const { nombre, observacion } = listingData;
 
-  const loadOptions = async (inputValue) => {
-    try {
-      if (inputValue === "") {
-        inputValue = "a";
-      }
-      const distritosRef = collection(db, "distritos");
-      const querySnapshot = await getDocs(
-        query(
-          distritosRef,
-          where("nombre_minus", ">=", inputValue.toLowerCase()),
-          where("nombre_minus", "<=", inputValue.toLowerCase() + "\uf8ff")
-        )
-      );
-      const distritos = querySnapshot.docs.map((doc) => ({
-        value: doc.id,
-        label: doc.data().nombre,
-        departamento: doc.data().departamento,
-      }));
-      return distritos;
-    } catch (error) {
-      toast.error(error.message);
-      return [];
-    }
-  };
-  const handleDistritoChange = async (selectedOption) => {
-    // Fetch geolocation data from Google Geocode API
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${
-        selectedOption.label
-      },${selectedOption.departamento},Paraguay&key=${
-        import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
-      }`
-    );
-    const data = await response.json();
-
-    // Extract latitude and longitude from response data
-    const { lat, lng } = data.results[0].geometry.location;
-
-    // Update form data and marker position
-    setListingData({
-      ...listingData,
-      distrito: selectedOption.label,
-      departamento: selectedOption.departamento,
-      latitud: lat,
-      longitud: lng,
-    });
-    setMarkerPosition([lat, lng]);
-  };
-
   const onChange = (e) => {
     setListingData({ ...listingData, [e.target.id]: e.target.value });
     if (e.target.files) {
@@ -107,6 +52,7 @@ export default function CreateListing() {
       ...listingData,
       id_usuario: auth.currentUser.uid,
       fecha_creacion: serverTimestamp(),
+      estado: "pendiente",
     };
 
     try {
@@ -117,6 +63,7 @@ export default function CreateListing() {
             ...listingItem,
             id_usuario: auth.currentUser.uid,
             fecha_creacion: serverTimestamp(),
+            estado: "pendiente",
           });
         }
       }
@@ -134,7 +81,7 @@ export default function CreateListing() {
     return <Spinner />;
   }
   return (
-    <main className="mx-auto px-2 md:max-w-3xl lg:max-w-5xl">
+    <main className="mx-auto px-2 md:max-w-3xl lg:max-w-6xl">
       <h1 className="mt-6 text-center text-3xl font-bold">
         Registrar un Pedido
       </h1>
@@ -203,23 +150,23 @@ export default function CreateListing() {
                 <div className="flex-1">
                   <p className="mt-6 text-lg font-semibold">Categoria</p>
                   <Select
-                    name="categoria"
-                    value={listingItem.categoria || ""}
+                    options={breakfastlunchItems.map((item) => ({
+                      value: item.category,
+                      label: item.category,
+                    }))}
+                    value={{
+                      value: listingItem.categoria,
+                      label: listingItem.categoria,
+                    }}
                     onChange={(selectedOption) =>
                       handleListingItemChange(index, {
                         target: {
                           name: "categoria",
-                          value: selectedOption,
+                          value: selectedOption.value,
                         },
                       })
                     }
-                    options={[
-                      { value: "alimentos", label: "Alimentos" },
-                      { value: "ropa", label: "Ropa" },
-                      { value: "medicamentos", label: "Medicamentos" },
-                      { value: "otros", label: "Otros" },
-                    ]}
-                    className="mt-6 w-full"
+                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
               </div>

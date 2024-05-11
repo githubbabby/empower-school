@@ -17,19 +17,18 @@ import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import Spinner from "../components/Spinner";
 import { useParams, useNavigate } from "react-router-dom";
 import _ from "lodash";
+import Select from "react-select";
+import { breakfastlunchItems } from "../datasets/breakfastlunchItems";
 
 export default function EditListing() {
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    price: "",
-    location: "",
-    images: [],
+    nombre: "",
+    observacion: "",
   });
-  const { title, description, price, location, images } = formData;
+  const { nombre, observacion } = formData;
 
   const [listingItems, setListingItems] = useState([{}]);
   const [originalListingItems, setOriginalListingItems] = useState([]);
@@ -44,15 +43,13 @@ export default function EditListing() {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
-        if (auth.currentUser.uid !== data.userId) {
+        if (auth.currentUser.uid !== data.id_usuario) {
           toast.error("No tienes permiso para editar este pedido");
           navigate("/");
         }
         setFormData({
-          title: data.title,
-          description: data.description,
-          price: data.price,
-          location: data.location,
+          nombre: data.nombre,
+          observacion: data.observacion,
         });
 
         const listingItemsRef = collection(
@@ -86,7 +83,7 @@ export default function EditListing() {
   };
 
   const handleAddListingItem = () => {
-    setListingItems([...listingItems, { name: "", quantity: "" }]);
+    setListingItems([...listingItems, {}]);
   };
 
   const handleRemoveListingItem = (listingItemId, index) => {
@@ -107,52 +104,16 @@ export default function EditListing() {
     setListingItems(newListingItems);
   };
 
-  const [markerPosition, setMarkerPosition] = useState([0, 0]);
-
-  const handleMarkerDragEnd = (e) => {
-    const { lat, lng } = e.target.getLatLng();
-    setMarkerPosition([lat, lng]);
-    setFormData({ ...formData, location: `${lat}, ${lng}` });
-  };
-
-  function MyMap({ center }) {
-    const map = useMap();
-
-    React.useEffect(() => {
-      map.flyTo(center);
-    }, [center, map]);
-
-    return null;
-  }
-
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
 
-    if (images.length > 6) {
-      setLoading(false);
-      toast.error("Solo puedes subir hasta 6 imágenes");
-      return;
-    }
-
-    const imgUrls = await Promise.all(
-      Array.from(images).map((image) => storeImage("pedidos", image))
-    ).catch((error) => {
-      setLoading(false);
-      console.error(error);
-      return;
-    });
-
-    const formDataCopy = {
-      ...formData,
-      imgUrls,
-      lastModified: serverTimestamp(),
-    };
-    delete formDataCopy.images;
-
     try {
       const docRef = doc(db, "pedidos", params.listingId);
-      await updateDoc(docRef, formDataCopy);
+      await updateDoc(docRef, {
+        ...formData,
+        fecha_modificacion: serverTimestamp(),
+      });
 
       const listingItemsRef = collection(
         db,
@@ -183,16 +144,18 @@ export default function EditListing() {
               batch.push(
                 updateDoc(listingItemRef, {
                   ...listingItemCopy,
-                  lastModified: serverTimestamp(),
+                  fecha_modificacion: serverTimestamp(),
                 })
               );
             }
           } else {
             batch.push(
+              console.log(listingItem),
               addDoc(listingItemsRef, {
                 ...listingItem,
-                created: serverTimestamp(),
-                userId: auth.currentUser.uid,
+                id_usuario: auth.currentUser.uid,
+                fecha_creacion: serverTimestamp(),
+                estado: "pendiente",
               })
             );
           }
@@ -242,142 +205,119 @@ export default function EditListing() {
     return <Spinner />;
   }
   return (
-    <main className="mx-auto px-2 md:max-w-3xl lg:max-w-5xl">
-      <h1 className="mt-6 text-center text-3xl font-bold">Edit Pedido</h1>
+    <main className="mx-auto px-2 md:max-w-3xl lg:max-w-6xl">
+      <h1 className="mt-6 text-center text-3xl font-bold">
+        Registrar un Pedido
+      </h1>
       <form onSubmit={handleSubmit}>
-        {/* Title */}
-        <p className="mt-6 text-lg font-semibold">Pedido Title</p>
+        {/* Nombre */}
+        <p className="mt-6 text-lg font-semibold">Nombre del Pedido</p>
         <input
           type="text"
-          id="title"
-          value={title}
+          id="nombre"
+          value={nombre}
           required
           onChange={onChange}
           minLength={3}
           className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        {listingItems &&
-          listingItems.length > 0 &&
-          listingItems.map((listingItem, index) => (
-            <div key={index}>
-              <div className="mt-6 rounded-lg bg-white px-9 py-6 shadow-lg">
-                <div className="mx-auto flex max-w-6xl items-center justify-between">
-                  <p className="text-lg font-semibold">Articulo Name</p>
-                  <button
-                    className="rounded-md bg-red-700 px-3 py-2 text-white focus:bg-red-500 focus:outline-none"
-                    type="button"
-                    onClick={() =>
-                      handleRemoveListingItem(listingItem.uid, index)
-                    }
-                  >
-                    Remove Articulo
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  name="name"
-                  value={listingItem.name}
-                  onChange={(event) => handleListingItemChange(index, event)}
-                  minLength={3}
-                  required
-                  className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <p className="mt-6 text-lg font-semibold">Quantity</p>
-                <input
-                  type="text"
-                  name="quantity"
-                  value={listingItem.quantity}
-                  onChange={(event) => handleListingItemChange(index, event)}
-                  minLength={3}
-                  className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+        {/* Observacion */}
+        <p className="mt-6 text-lg font-semibold">Observacion</p>
+        <textarea
+          id="observacion"
+          value={observacion}
+          onChange={onChange}
+          minLength={3}
+          className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {/* Articulos */}
+        <p className="mt-6 text-center text-2xl font-semibold">Articulos</p>
+        <div className="gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3">
+          {listingItems.map((listingItem, index) => (
+            <div
+              key={index}
+              className="mt-6 rounded-lg bg-white px-9 py-6 shadow-lg"
+            >
+              <div className="mx-auto flex max-w-6xl items-center justify-between">
+                <p className="text-lg font-semibold">Nombre</p>
+                <button
+                  className="rounded-md bg-red-700 px-3 py-2 text-white focus:bg-red-500 focus:outline-none"
+                  type="button"
+                  onClick={() =>
+                    handleRemoveListingItem(listingItem.uid, index)
+                  }
+                >
+                  Remover Articulo
+                </button>
               </div>
+              <input
+                type="text"
+                name="nombre_articulo"
+                value={listingItem.nombre_articulo || ""}
+                onChange={(event) => handleListingItemChange(index, event)}
+                minLength={3}
+                required
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <div className="mx-auto flex max-w-6xl items-center space-x-4">
+                <div className="flex-1">
+                  <p className="mt-6 text-lg font-semibold">Cantidad</p>
+                  <input
+                    type="number"
+                    name="cantidad"
+                    value={listingItem.cantidad || ""}
+                    onChange={(event) => handleListingItemChange(index, event)}
+                    required
+                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div className="flex-1">
+                  <p className="mt-6 text-lg font-semibold">Categoria</p>
+                  <Select
+                    options={breakfastlunchItems.map((item) => ({
+                      value: item.category,
+                      label: item.category,
+                    }))}
+                    value={{
+                      value: listingItem.categoria,
+                      label: listingItem.categoria,
+                    }}
+                    onChange={(selectedOption) =>
+                      handleListingItemChange(index, {
+                        target: {
+                          name: "categoria",
+                          value: selectedOption.value,
+                        },
+                      })
+                    }
+                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+              <p className="mt-6 text-lg font-semibold">Observacion</p>
+              <textarea
+                name="observacion"
+                value={listingItem.observacion || ""}
+                onChange={(event) => handleListingItemChange(index, event)}
+                minLength={3}
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           ))}
-
+        </div>
         <button
           className="mt-9 rounded-md bg-green-700 px-3 py-2 text-white focus:bg-green-500 focus:outline-none"
           type="button"
           onClick={handleAddListingItem}
         >
-          Add Articulo
+          Añadir Articulo
         </button>
-        {/* Description */}
-        <p className="mt-6 text-lg font-semibold">Pedido Description</p>
-        <input
-          type="text"
-          id="description"
-          value={description}
-          required
-          onChange={onChange}
-          minLength={3}
-          className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {/* Price */}
-        <p className="mt-6 text-lg font-semibold">Price</p>
-        <input
-          type="text"
-          id="price"
-          value={price}
-          required
-          onChange={onChange}
-          className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {/* Location */}
-        <p className="mt-6 text-lg font-semibold">Location</p>
-        <input
-          type="text"
-          id="location"
-          value={location}
-          onChange={onChange}
-          minLength={3}
-          className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        {/* Map */}
-        <p className="mt-6 text-lg font-semibold">
-          Please mark the location on the map (drag the marker while holding
-          down the left mouse button to precisely locate the listing on the map.
-          You can use the mouse wheel to zoom in and out of the map.)
-        </p>
-        <div className="mt-6 h-96 w-full rounded-md bg-gray-300">
-          <MapContainer
-            center={markerPosition}
-            zoom={10}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-            />
-            <Marker
-              draggable={true}
-              position={markerPosition}
-              eventHandlers={{
-                dragend: handleMarkerDragEnd,
-              }}
-            />
-            <MyMap center={markerPosition} />
-          </MapContainer>
-        </div>
-        {/* Images */}
-        <div className="mb-6">
-          <p className="text-lg font-semibold">Pedido Images</p>
-          <input
-            type="file"
-            id="images"
-            onChange={onChange}
-            multiple
-            accept=".jpg, .jpeg, .png"
-            className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-
         {/* Submit */}
         <button
           type="submit"
-          className="mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
+          className="mb-6 mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
         >
-          Save
+          Editar
         </button>
       </form>
     </main>
