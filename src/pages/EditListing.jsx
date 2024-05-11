@@ -83,7 +83,10 @@ export default function EditListing() {
   };
 
   const handleAddListingItem = () => {
-    setListingItems([...listingItems, {}]);
+    setListingItems([
+      ...listingItems,
+      { nombre_articulo: "", cantidad: 1, categoria: "", observacion: "" },
+    ]);
   };
 
   const handleRemoveListingItem = (listingItemId, index) => {
@@ -96,11 +99,9 @@ export default function EditListing() {
   };
 
   const handleListingItemChange = (index, event) => {
+    const { name, value } = event.target;
     const newListingItems = [...listingItems];
-    newListingItems[index] = {
-      ...newListingItems[index],
-      [event.target.name]: event.target.value,
-    };
+    newListingItems[index] = { ...newListingItems[index], [name]: value };
     setListingItems(newListingItems);
   };
 
