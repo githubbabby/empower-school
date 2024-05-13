@@ -70,7 +70,6 @@ export default function School() {
 
   return (
     <main>
-      {/* TODO: School is the physical place and Institute can be the shifts day or night, institutes will be a collection inside the document(school) make CreateInstitute and EditInstitute components same as school but lat and long will be taken from parent document */}
       <div className="m-4 flex max-w-6xl flex-col rounded-xl bg-white p-4 shadow-lg md:flex-row lg:mx-auto lg:space-x-5">
         <div className="lg-[400px] h-[200px] w-full">
           <p className="text-2xl font-bold text-[#9d4545]">{school.nombre}</p>

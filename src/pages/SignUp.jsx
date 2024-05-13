@@ -15,12 +15,12 @@ import { toast } from "react-toastify";
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    nombre: "",
     email: "",
     password: "",
     role: "donor", // Default role is 'donor'
   });
-  const { name, email, password, role } = formData;
+  const { nombre, email, password, role } = formData;
   const navigate = useNavigate();
 
   function onChange(e) {
@@ -32,7 +32,7 @@ export default function SignUp() {
         role: e.target.value,
       }));
     } else {
-      // For other input fields (name, email, password), update them as before.
+      // For other input fields (nombre, email, password), update them as before.
       setFormData((prevState) => ({
         ...prevState,
         [e.target.id]: e.target.value,
@@ -51,15 +51,17 @@ export default function SignUp() {
         password
       );
       await updateProfile(auth.currentUser, {
-        displayName: name,
+        displayName: nombre,
       });
       const user = userCredentials.user;
-      const formDataCopy = { ...formData };
+      const formDataCopy = {
+        ...formData,
+        fecha_creacion: serverTimestamp(),
+      };
       delete formDataCopy.password;
-      formDataCopy.timestamp = serverTimestamp();
 
       await setDoc(doc(db, "users", user.uid), formDataCopy);
-      toast.success("Account created successfully.");
+      toast.success("Cuenta creada exitosamente!");
       navigate("/");
     } catch (error) {
       toast.error(error.message);
@@ -81,8 +83,8 @@ export default function SignUp() {
           <form onSubmit={onSubmit}>
             <input
               type="text"
-              id="name"
-              value={name}
+              id="nombre"
+              value={nombre}
               onChange={onChange}
               placeholder="Name"
               required
