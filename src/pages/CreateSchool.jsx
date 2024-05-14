@@ -264,7 +264,7 @@ export default function CreateSchool() {
         <AsyncSelect
           type="select"
           id="distrito"
-          value={distrito.label}
+          value={{ label: distrito, value: distrito }}
           onChange={handleDistritoChange}
           defaultOptions
           loadOptions={loadOptions}

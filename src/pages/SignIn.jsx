@@ -32,7 +32,7 @@ export default function SignIn() {
       );
       if (userCredentials.user) {
         navigate("/");
-        toast.success("Logged in successfully!");
+        toast.success("Inicio de sesión exitoso");
       }
     } catch (error) {
       toast.error(error.message);

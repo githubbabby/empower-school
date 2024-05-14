@@ -11,11 +11,11 @@ import AsyncSelect from "react-select/async";
 import { MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
 import { getDoc } from "firebase/firestore";
 import Spinner from "../components/Spinner";
-import { set } from "lodash";
 
 export default function Profile() {
   const auth = getAuth();
   const navigate = useNavigate();
+  const [userRole, setUserRole] = useState("");
   const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -52,6 +52,7 @@ export default function Profile() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
+          setUserRole(data.role);
           setFormData({
             nombre: data.nombre,
             apellido: data.apellido,
@@ -65,7 +66,9 @@ export default function Profile() {
             longitud: data.longitud,
           });
 
-          setMarkerPosition([data.latitud, data.longitud]);
+          if (data.latitud && data.longitud) {
+            setMarkerPosition([data.latitud, data.longitud]);
+          }
         }
       } catch (error) {
         toast.error(error.message);
@@ -400,21 +403,24 @@ export default function Profile() {
               </p>
             </div>
           </form>
-          <button
-            type="submit"
-            className="w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
-          >
-            <Link
-              to="/create-school"
-              className="flex items-center justify-center"
-            >
-              Registrar escuela
-            </Link>
-          </button>
         </div>
       </section>
-      <div className="mx-auto mt-6 max-w-6xl px-3">
-        {!loading && schools.length > 0 && (
+      {userRole === "schoolRep" && (
+        <button
+          type="submit"
+          className="w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
+        >
+          <Link
+            to="/create-school"
+            className="flex items-center justify-center"
+          >
+            Registrar escuela
+          </Link>
+        </button>
+      )}
+
+      {userRole === "schoolRep" && schools.length > 0 && (
+        <div className="mx-auto mt-6 max-w-6xl px-3">
           <>
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Mis Escuelas
@@ -431,8 +437,8 @@ export default function Profile() {
               ))}
             </ul>
           </>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }
