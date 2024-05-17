@@ -211,26 +211,6 @@ export default function Profile() {
     fetchUserSchools();
   }, [auth.currentUser.uid]);
 
-  function onEdit(schoolId) {
-    navigate(`/edit-school/${schoolId}`);
-  }
-  async function onDelete(schoolId) {
-    if (window.confirm("Esta seguro de eliminar esta escuela?")) {
-      try {
-        const docRef = doc(db, "escuelas", schoolId);
-        await updateDoc(docRef, {
-          eliminado: true,
-          fecha_eliminacion: serverTimestamp(),
-        });
-        setSchools((prevState) =>
-          prevState.filter((school) => school.id !== schoolId)
-        );
-        toast.success("Escuela eliminada con exito");
-      } catch (error) {
-        toast.error(error.message);
-      }
-    }
-  }
   if (loading) {
     return <Spinner />;
   }
@@ -417,27 +397,6 @@ export default function Profile() {
             Registrar escuela
           </Link>
         </button>
-      )}
-
-      {userRole === "schoolRep" && schools.length > 0 && (
-        <div className="mx-auto mt-6 max-w-6xl px-3">
-          <>
-            <h2 className="mb-6 text-center text-2xl font-semibold">
-              Mis Escuelas
-            </h2>
-            <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-              {schools.map((school) => (
-                <SchoolItem
-                  key={school.id}
-                  id={school.id}
-                  school={school.data}
-                  onEdit={() => onEdit(school.id)}
-                  onDelete={() => onDelete(school.id)}
-                />
-              ))}
-            </ul>
-          </>
-        </div>
       )}
     </>
   );

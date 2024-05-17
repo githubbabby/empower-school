@@ -52,9 +52,21 @@ export default function Home() {
       const querySnapshot = await getDocs(q);
       let schools = [];
 
-      querySnapshot.forEach((doc) => {
-        return schools.push({ id: doc.id, data: doc.data() });
-      });
+      for (let doc of querySnapshot.docs) {
+        let school = { id: doc.id, data: doc.data(), institutes: [] };
+
+        const InstitutesRef = collection(doc.ref, "institutos");
+        const institutesSnapshot = await getDocs(InstitutesRef);
+        institutesSnapshot.forEach((instituteDoc) => {
+          school.institutes.push({
+            id: instituteDoc.id,
+            data: instituteDoc.data(),
+          });
+        });
+
+        schools.push(school);
+      }
+
       setSchools(schools);
     } catch (error) {
       toast.error(error.message);
@@ -64,6 +76,23 @@ export default function Home() {
   function onEdit(schoolId) {
     navigate(`/edit-school/${schoolId}`);
   }
+  async function onDelete(schoolId) {
+    if (window.confirm("Esta seguro de eliminar esta escuela?")) {
+      try {
+        const docRef = doc(db, "escuelas", schoolId);
+        await updateDoc(docRef, {
+          eliminado: true,
+          fecha_eliminacion: serverTimestamp(),
+        });
+        setSchools((prevState) =>
+          prevState.filter((school) => school.id !== schoolId)
+        );
+        toast.success("Escuela eliminada con exito");
+      } catch (error) {
+        toast.error(error.message);
+      }
+    }
+  }
 
   if (loading) {
     return <Spinner />;
@@ -71,7 +100,7 @@ export default function Home() {
   return (
     <div>
       {!loading && userRole === "schoolRep" && schools.length > 0 && (
-        <div className="mx-auto mt-6 max-w-6xl px-3">
+        <div className="mx-auto mt-6 max-w-full px-3">
           <>
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Mis Escuelas
@@ -82,14 +111,17 @@ export default function Home() {
                   key={school.id}
                   id={school.id}
                   school={school.data}
+                  institutes={school.institutes}
                   onEdit={() => onEdit(school.id)}
+                  onDelete={() => onDelete(school.id)}
                 />
               ))}
             </ul>
           </>
         </div>
       )}
-      {userRole === "donor" && (
+
+      {!loading && userRole === "donor" && (
         <div className="text-center">
           <h2 className="text-2xl font-semibold">Donante</h2>
           <p className="mt-6">Bienvenido donante</p>

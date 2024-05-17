@@ -5,7 +5,13 @@ import { MdLocationPin } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
 
-export default function SchoolItem({ school, id, onEdit, onDelete }) {
+export default function SchoolItem({
+  school,
+  institutes,
+  id,
+  onEdit,
+  onDelete,
+}) {
   if (school.eliminado) return null;
   return (
     <li className="relative m-[10px] flex flex-col items-center justify-between overflow-hidden rounded-md bg-white shadow-md transition-shadow duration-150 hover:shadow-xl">
@@ -43,6 +49,17 @@ export default function SchoolItem({ school, id, onEdit, onDelete }) {
       >
         <FaRegTrashCan />
       </button>
+      <ul>
+        {institutes.map((institute) => (
+          <li
+            key={institute.id}
+            className="relative m-[10px] overflow-hidden rounded-md border-2 border-[#f4c3c3] bg-white shadow-md transition-shadow duration-150 hover:shadow-xl"
+          >
+            <p>{institute.data.nombre_instituto}</p>
+            <p>Turno: {institute.data.turno}</p>
+          </li>
+        ))}
+      </ul>
     </li>
   );
 }
