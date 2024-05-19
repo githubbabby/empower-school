@@ -207,9 +207,7 @@ export default function EditListing() {
   }
   return (
     <main className="mx-auto px-2 md:max-w-3xl lg:max-w-6xl">
-      <h1 className="mt-6 text-center text-3xl font-bold">
-        Registrar un Pedido
-      </h1>
+      <h1 className="mt-6 text-center text-3xl font-bold">Editar Pedido</h1>
       <form onSubmit={handleSubmit}>
         {/* Nombre */}
         <p className="mt-6 text-lg font-semibold">Nombre del Pedido</p>
@@ -260,41 +258,35 @@ export default function EditListing() {
                 required
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <div className="mx-auto flex max-w-6xl items-center space-x-4">
-                <div className="flex-1">
-                  <p className="mt-6 text-lg font-semibold">Cantidad</p>
-                  <input
-                    type="number"
-                    name="cantidad"
-                    value={listingItem.cantidad || ""}
-                    onChange={(event) => handleListingItemChange(index, event)}
-                    required
-                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex-1">
-                  <p className="mt-6 text-lg font-semibold">Categoria</p>
-                  <Select
-                    options={breakfastlunchItems.map((item) => ({
-                      value: item.category,
-                      label: item.category,
-                    }))}
-                    value={{
-                      value: listingItem.categoria,
-                      label: listingItem.categoria,
-                    }}
-                    onChange={(selectedOption) =>
-                      handleListingItemChange(index, {
-                        target: {
-                          name: "categoria",
-                          value: selectedOption.value,
-                        },
-                      })
-                    }
-                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              <p className="mt-6 text-lg font-semibold">Cantidad</p>
+              <input
+                type="number"
+                name="cantidad"
+                value={listingItem.cantidad || ""}
+                onChange={(event) => handleListingItemChange(index, event)}
+                required
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <p className="mt-6 text-lg font-semibold">Categoria</p>
+              <Select
+                options={breakfastlunchItems.map((item) => ({
+                  value: item.category,
+                  label: item.category,
+                }))}
+                value={{
+                  value: listingItem.categoria,
+                  label: listingItem.categoria,
+                }}
+                onChange={(selectedOption) =>
+                  handleListingItemChange(index, {
+                    target: {
+                      name: "categoria",
+                      value: selectedOption.value,
+                    },
+                  })
+                }
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
               <p className="mt-6 text-lg font-semibold">Observacion</p>
               <textarea
                 name="observacion"

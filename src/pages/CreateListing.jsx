@@ -133,43 +133,37 @@ export default function CreateListing() {
                 required
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <div className="mx-auto flex max-w-6xl items-center space-x-4">
-                <div className="flex-1">
-                  <p className="mt-6 text-lg font-semibold">Cantidad</p>
-                  <input
-                    type="number"
-                    name="cantidad"
-                    value={listingItem.cantidad || ""}
-                    onChange={(event) => handleListingItemChange(index, event)}
-                    min={1}
-                    required
-                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+              <p className="mt-6 text-lg font-semibold">Cantidad</p>
+              <input
+                type="number"
+                name="cantidad"
+                value={listingItem.cantidad || ""}
+                onChange={(event) => handleListingItemChange(index, event)}
+                min={1}
+                required
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
 
-                <div className="flex-1">
-                  <p className="mt-6 text-lg font-semibold">Categoria</p>
-                  <Select
-                    options={breakfastlunchItems.map((item) => ({
-                      value: item.category,
-                      label: item.category,
-                    }))}
-                    value={{
-                      value: listingItem.categoria,
-                      label: listingItem.categoria,
-                    }}
-                    onChange={(selectedOption) =>
-                      handleListingItemChange(index, {
-                        target: {
-                          name: "categoria",
-                          value: selectedOption.value,
-                        },
-                      })
-                    }
-                    className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
+              <p className="mt-6 text-lg font-semibold">Categoria</p>
+              <Select
+                options={breakfastlunchItems.map((item) => ({
+                  value: item.category,
+                  label: item.category,
+                }))}
+                value={{
+                  value: listingItem.categoria,
+                  label: listingItem.categoria,
+                }}
+                onChange={(selectedOption) =>
+                  handleListingItemChange(index, {
+                    target: {
+                      name: "categoria",
+                      value: selectedOption.value,
+                    },
+                  })
+                }
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
               <p className="mt-6 text-lg font-semibold">Observacion</p>
               <textarea
                 name="observacion"

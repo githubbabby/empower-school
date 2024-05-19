@@ -220,7 +220,7 @@ export default function Profile() {
         <h1 className="mt-6 text-center text-3xl font-bold">
           Perfil de Usuario
         </h1>
-        <div className="mt-6 w-full px-3 md:w-[50%]">
+        <div className="mt-6 w-full px-3">
           <form>
             {/* Nombre */}
             <p className="mt-6 text-lg font-semibold">Nombre</p>
@@ -384,20 +384,20 @@ export default function Profile() {
             </div>
           </form>
         </div>
-      </section>
-      {userRole === "schoolRep" && (
-        <button
-          type="submit"
-          className="w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
-        >
-          <Link
-            to="/create-school"
-            className="flex items-center justify-center"
+        {userRole === "schoolRep" && (
+          <button
+            type="submit"
+            className="mb-6 w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
           >
-            Registrar escuela
-          </Link>
-        </button>
-      )}
+            <Link
+              to="/create-school"
+              className="flex items-center justify-center"
+            >
+              Registrar escuela
+            </Link>
+          </button>
+        )}
+      </section>
     </>
   );
 }

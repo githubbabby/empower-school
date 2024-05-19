@@ -2,13 +2,13 @@ export const breakfastlunchItems = [
   {
     id: 1,
     name: "Turkey Sandwich",
-    category: "Sandwiches",
+    category: "Tomate",
     ingredients: ["Turkey", "Cheese", "Lettuce", "Tomato", "Whole Wheat Bread"],
   },
   {
     id: 2,
     name: "Veggie Pizza",
-    category: "Pizza",
+    category: "Banana",
     ingredients: [
       "Bell Peppers",
       "Olives",
@@ -20,7 +20,7 @@ export const breakfastlunchItems = [
   {
     id: 3,
     name: "Chicken Salad",
-    category: "Salads",
+    category: "Chipa piru",
     ingredients: [
       "Chicken Breast",
       "Mixed Greens",
@@ -32,13 +32,13 @@ export const breakfastlunchItems = [
   {
     id: 4,
     name: "Beef Taco",
-    category: "Tacos",
+    category: "Leche UAT",
     ingredients: ["Beef", "Cheese", "Lettuce", "Tomatoes", "Taco Shells"],
   },
   {
     id: 5,
     name: "Fruit Mix",
-    category: "Fruits",
+    category: "Manzana",
     ingredients: ["Apple", "Banana", "Orange", "Grapes"],
   },
 ];

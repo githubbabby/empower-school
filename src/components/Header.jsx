@@ -26,7 +26,7 @@ export default function Header() {
       <header className="mx-auto flex max-w-6xl items-center justify-between px-3">
         <div>
           <img
-            src="https://static.rdc.moveaws.com/images/logos/rdc-logo-default.svg"
+            src="https://www.svgrepo.com/show/125442/school.svg"
             alt="logo"
             className="h-5 cursor-pointer"
             onClick={() => navigate("/")}
