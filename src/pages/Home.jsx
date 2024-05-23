@@ -14,6 +14,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState("");
   const [schools, setSchools] = useState([]);
+  const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,6 +28,8 @@ export default function Home() {
           setUserRole(userSnap.data().role);
           if (userSnap.data().role === "schoolRep") {
             await fetchUserSchools(user.uid);
+          } else if (userSnap.data().role === "donor") {
+            await fetchSchools();
           }
         } else {
           console.error("No user data available");
@@ -50,9 +53,37 @@ export default function Home() {
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
-      let schools = [];
+      let userSchools = [];
 
       for (let doc of querySnapshot.docs) {
+        let userSchool = { id: doc.id, data: doc.data(), institutes: [] };
+
+        const InstitutesRef = collection(doc.ref, "institutos");
+        const institutesSnapshot = await getDocs(InstitutesRef);
+        institutesSnapshot.forEach((instituteDoc) => {
+          userSchool.institutes.push({
+            id: instituteDoc.id,
+            data: instituteDoc.data(),
+          });
+        });
+
+        userSchools.push(userSchool);
+      }
+
+      setUserSchools(userSchools);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
+  async function fetchSchools() {
+    try {
+      const SchoolRef = collection(db, "escuelas");
+      const q = query(SchoolRef, orderBy("fecha_creacion", "desc"));
+      const querySnapshot = await getDocs(q);
+      let schools = [];
+
+      const fetchInstitutesPromises = querySnapshot.docs.map(async (doc) => {
         let school = { id: doc.id, data: doc.data(), institutes: [] };
 
         const InstitutesRef = collection(doc.ref, "institutos");
@@ -64,10 +95,13 @@ export default function Home() {
           });
         });
 
-        schools.push(school);
-      }
+        return school;
+      });
+
+      schools = await Promise.all(fetchInstitutesPromises);
 
       setSchools(schools);
+      console.log(schools);
     } catch (error) {
       toast.error(error.message);
     }
@@ -84,8 +118,8 @@ export default function Home() {
           eliminado: true,
           fecha_eliminacion: serverTimestamp(),
         });
-        setSchools((prevState) =>
-          prevState.filter((school) => school.id !== schoolId)
+        setUserSchools((prevState) =>
+          prevState.filter((userSchool) => userSchool.id !== schoolId)
         );
         toast.success("Escuela eliminada con exito");
       } catch (error) {
@@ -99,21 +133,21 @@ export default function Home() {
   }
   return (
     <div>
-      {!loading && userRole === "schoolRep" && schools.length > 0 && (
+      {!loading && userRole === "schoolRep" && userSchools.length > 0 && (
         <div className="mx-auto mt-6 max-w-full px-3">
           <>
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Mis Escuelas
             </h2>
             <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-              {schools.map((school) => (
+              {userSchools.map((userSchool) => (
                 <SchoolItem
-                  key={school.id}
-                  id={school.id}
-                  school={school.data}
-                  institutes={school.institutes}
-                  onEdit={() => onEdit(school.id)}
-                  onDelete={() => onDelete(school.id)}
+                  key={userSchool.id}
+                  id={userSchool.id}
+                  userSchool={userSchool.data}
+                  institutes={userSchool.institutes}
+                  onEdit={() => onEdit(userSchool.id)}
+                  onDelete={() => onDelete(userSchool.id)}
                 />
               ))}
             </ul>
