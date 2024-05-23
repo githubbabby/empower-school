@@ -1,14 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { getAuth } from "firebase/auth";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+  getDoc,
+  orderBy,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
 import SchoolItem from "../components/SchoolItem";
-import { doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { orderBy } from "firebase/firestore";
-import { onAuthStateChanged } from "firebase/auth";
+import { MapContainer, TileLayer, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -101,7 +114,6 @@ export default function Home() {
       schools = await Promise.all(fetchInstitutesPromises);
 
       setSchools(schools);
-      console.log(schools);
     } catch (error) {
       toast.error(error.message);
     }
@@ -110,6 +122,7 @@ export default function Home() {
   function onEdit(schoolId) {
     navigate(`/edit-school/${schoolId}`);
   }
+
   async function onDelete(schoolId) {
     if (window.confirm("Esta seguro de eliminar esta escuela?")) {
       try {
@@ -128,9 +141,36 @@ export default function Home() {
     }
   }
 
+  const MapWithMarkers = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      const markers = L.markerClusterGroup();
+
+      schools.forEach((school) => {
+        if (school.data.latitud && school.data.longitud) {
+          const marker = L.marker([
+            school.data.latitud,
+            school.data.longitud,
+          ]).bindPopup(`<b>${school.data.nombre}</b>`);
+          markers.addLayer(marker);
+        }
+      });
+
+      map.addLayer(markers);
+
+      return () => {
+        map.removeLayer(markers);
+      };
+    }, [map, schools]);
+
+    return null;
+  };
+
   if (loading) {
     return <Spinner />;
   }
+
   return (
     <div>
       {!loading && userRole === "schoolRep" && userSchools.length > 0 && (
@@ -156,9 +196,18 @@ export default function Home() {
       )}
 
       {!loading && userRole === "donor" && (
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold">Donante</h2>
-          <p className="mt-6">Bienvenido donante</p>
+        <div>
+          <MapContainer
+            center={[-25.2637, -57.5759]} // Set a default center
+            zoom={10}
+            style={{ height: "600px", width: "100%" }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            />
+            <MapWithMarkers />
+          </MapContainer>
         </div>
       )}
     </div>
