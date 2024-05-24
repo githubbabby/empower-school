@@ -11,9 +11,7 @@ import {
   collection,
   getDocs,
 } from "firebase/firestore";
-import { storeImage } from "../imageUtils";
 import { getAuth } from "firebase/auth";
-import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
 import Spinner from "../components/Spinner";
 import { useParams, useNavigate } from "react-router-dom";
 import _ from "lodash";
@@ -98,12 +96,18 @@ export default function EditListing() {
     setListingItems(newListingItems);
   };
 
-  const handleListingItemChange = (index, event) => {
-    const { name, value } = event.target;
-    const newListingItems = [...listingItems];
-    newListingItems[index] = { ...newListingItems[index], [name]: value };
-    setListingItems(newListingItems);
-  };
+  function handleListingItemChange(index, ...changes) {
+    setListingItems((prevItems) => {
+      const newItems = [...prevItems];
+      changes.forEach((change) => {
+        newItems[index] = {
+          ...newItems[index],
+          [change.target.name]: change.target.value,
+        };
+      });
+      return newItems;
+    });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -277,16 +281,49 @@ export default function EditListing() {
                   value: listingItem.categoria,
                   label: listingItem.categoria,
                 }}
-                onChange={(selectedOption) =>
-                  handleListingItemChange(index, {
-                    target: {
-                      name: "categoria",
-                      value: selectedOption.value,
+                onChange={(selectedOption) => {
+                  handleListingItemChange(
+                    index,
+                    {
+                      target: {
+                        name: "categoria",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
                     },
-                  })
-                }
+                    {
+                      target: {
+                        name: "ingrediente",
+                        value: "",
+                      },
+                    }
+                  );
+                }}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p className="mt-6 text-lg font-semibold">Ingrediente</p>
+              {listingItem.categoria && (
+                <Select
+                  options={breakfastlunchItems
+                    .find((item) => item.category === listingItem.categoria)
+                    ?.ingredients.map((ingredient) => ({
+                      value: ingredient,
+                      label: ingredient,
+                    }))}
+                  value={{
+                    value: listingItem.ingrediente,
+                    label: listingItem.ingrediente,
+                  }}
+                  onChange={(selectedOption) =>
+                    handleListingItemChange(index, {
+                      target: {
+                        name: "ingrediente",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
+                    })
+                  }
+                  className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
               <p className="mt-6 text-lg font-semibold">Observacion</p>
               <textarea
                 name="observacion"

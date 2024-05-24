@@ -19,8 +19,6 @@ export default function CreateListing() {
   });
   const [listingItems, setListingItems] = useState([{}]);
 
-  const [selectedIngredient, setSelectedIngredient] = useState("");
-
   const handleAddListingItem = () => {
     setListingItems([...listingItems, {}]);
   };
@@ -31,11 +29,18 @@ export default function CreateListing() {
     setListingItems(newListingItems);
   };
 
-  const handleListingItemChange = (index, event) => {
-    const newListingItems = [...listingItems];
-    newListingItems[index][event.target.name] = event.target.value;
-    setListingItems(newListingItems);
-  };
+  function handleListingItemChange(index, ...changes) {
+    setListingItems((prevItems) => {
+      const newItems = [...prevItems];
+      changes.forEach((change) => {
+        newItems[index] = {
+          ...newItems[index],
+          [change.target.name]: change.target.value,
+        };
+      });
+      return newItems;
+    });
+  }
 
   const { nombre, observacion } = listingData;
 
@@ -155,18 +160,21 @@ export default function CreateListing() {
                   label: listingItem.categoria,
                 }}
                 onChange={(selectedOption) => {
-                  handleListingItemChange(index, {
-                    target: {
-                      name: "categoria",
-                      value: selectedOption ? selectedOption.value : "",
+                  handleListingItemChange(
+                    index,
+                    {
+                      target: {
+                        name: "categoria",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
                     },
-                  });
-                  handleListingItemChange(index, {
-                    target: {
-                      name: "ingrediente",
-                      value: "",
-                    },
-                  });
+                    {
+                      target: {
+                        name: "ingrediente",
+                        value: "",
+                      },
+                    }
+                  );
                 }}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
