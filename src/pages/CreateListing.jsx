@@ -19,6 +19,8 @@ export default function CreateListing() {
   });
   const [listingItems, setListingItems] = useState([{}]);
 
+  const [selectedIngredient, setSelectedIngredient] = useState("");
+
   const handleAddListingItem = () => {
     setListingItems([...listingItems, {}]);
   };
@@ -106,7 +108,6 @@ export default function CreateListing() {
           minLength={3}
           className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        {/* Articulos */}
         <p className="mt-6 text-center text-2xl font-semibold">Articulos</p>
         <div className="gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-3">
           {listingItems.map((listingItem, index) => (
@@ -130,7 +131,6 @@ export default function CreateListing() {
                 value={listingItem.nombre_articulo || ""}
                 onChange={(event) => handleListingItemChange(index, event)}
                 minLength={3}
-                required
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <p className="mt-6 text-lg font-semibold">Cantidad</p>
@@ -154,16 +154,47 @@ export default function CreateListing() {
                   value: listingItem.categoria,
                   label: listingItem.categoria,
                 }}
-                onChange={(selectedOption) =>
+                onChange={(selectedOption) => {
                   handleListingItemChange(index, {
                     target: {
                       name: "categoria",
-                      value: selectedOption.value,
+                      value: selectedOption ? selectedOption.value : "",
                     },
-                  })
-                }
+                  });
+                  handleListingItemChange(index, {
+                    target: {
+                      name: "ingrediente",
+                      value: "",
+                    },
+                  });
+                }}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <p className="mt-6 text-lg font-semibold">Ingrediente</p>
+              {listingItem.categoria && (
+                <Select
+                  options={breakfastlunchItems
+                    .find((item) => item.category === listingItem.categoria)
+                    ?.ingredients.map((ingredient) => ({
+                      value: ingredient,
+                      label: ingredient,
+                    }))}
+                  value={{
+                    value: listingItem.ingrediente,
+                    label: listingItem.ingrediente,
+                  }}
+                  onChange={(selectedOption) =>
+                    handleListingItemChange(index, {
+                      target: {
+                        name: "ingrediente",
+                        value: selectedOption ? selectedOption.value : "",
+                      },
+                    })
+                  }
+                  className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              )}
+
               <p className="mt-6 text-lg font-semibold">Observacion</p>
               <textarea
                 name="observacion"
@@ -175,7 +206,6 @@ export default function CreateListing() {
             </div>
           ))}
         </div>
-
         <button
           className="mt-9 rounded-md bg-green-700 px-3 py-2 text-white focus:bg-green-500 focus:outline-none"
           type="button"
@@ -183,8 +213,6 @@ export default function CreateListing() {
         >
           Añadir Articulo
         </button>
-
-        {/* Submit */}
         <button
           type="submit"
           className="mb-6 mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
