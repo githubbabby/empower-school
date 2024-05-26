@@ -71,6 +71,7 @@ export default function CreateListing() {
           await addDoc(collection(db, "pedidos", docRef.id, "articulos"), {
             ...listingItem,
             id_usuario: auth.currentUser.uid,
+            id_pedido: docRef.id,
             id_instituto: params.instituteId,
             fecha_creacion: serverTimestamp(),
             estado: "pendiente",

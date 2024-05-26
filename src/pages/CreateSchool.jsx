@@ -168,6 +168,7 @@ export default function CreateSchool() {
           await addDoc(collection(db, "escuelas", docRef.id, "institutos"), {
             ...institute,
             id_usuario: auth.currentUser.uid,
+            id_escuela: docRef.id,
             fecha_creacion: serverTimestamp(),
           });
         }
