@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import { MdLocationPin } from "react-icons/md";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { MdEdit } from "react-icons/md";
+import { useNavigate } from "react-router-dom";
 
 export default function SchoolItem({
   userSchool,
@@ -13,6 +14,8 @@ export default function SchoolItem({
   onDelete,
 }) {
   if (userSchool.eliminado) return null;
+  const navigate = useNavigate();
+
   return (
     <li className="relative m-[10px] flex flex-col items-center justify-between overflow-hidden rounded-md bg-white shadow-md transition-shadow duration-150 hover:shadow-xl">
       <Link className="contents" to={`/school/${id}`}>
@@ -57,6 +60,9 @@ export default function SchoolItem({
           >
             <p>{institute.data.nombre_instituto}</p>
             <p>Turno: {institute.data.turno}</p>
+            <button onClick={() => navigate(`/create-listing/${institute.id}`)}>
+              Crear pedido
+            </button>
           </li>
         ))}
       </ul>

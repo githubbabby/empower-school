@@ -4,11 +4,12 @@ import { toast } from "react-toastify";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import Spinner from "../components/Spinner";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { breakfastlunchItems } from "../datasets/breakfastlunchItems";
 
 export default function CreateListing() {
+  const params = useParams();
   const navigate = useNavigate();
   const auth = getAuth();
   const [loading, setLoading] = useState(false);
@@ -58,6 +59,7 @@ export default function CreateListing() {
     const listingDataCopy = {
       ...listingData,
       id_usuario: auth.currentUser.uid,
+      id_instituto: params.instituteId,
       fecha_creacion: serverTimestamp(),
       estado: "pendiente",
     };
@@ -69,6 +71,7 @@ export default function CreateListing() {
           await addDoc(collection(db, "pedidos", docRef.id, "articulos"), {
             ...listingItem,
             id_usuario: auth.currentUser.uid,
+            id_instituto: params.instituteId,
             fecha_creacion: serverTimestamp(),
             estado: "pendiente",
           });

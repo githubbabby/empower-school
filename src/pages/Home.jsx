@@ -68,7 +68,7 @@ export default function Home() {
       const querySnapshot = await getDocs(q);
       let userSchools = [];
 
-      for (let doc of querySnapshot.docs) {
+      const schoolPromises = querySnapshot.docs.map(async (doc) => {
         let userSchool = { id: doc.id, data: doc.data(), institutes: [] };
 
         const InstitutesRef = collection(doc.ref, "institutos");
@@ -80,8 +80,10 @@ export default function Home() {
           });
         });
 
-        userSchools.push(userSchool);
-      }
+        return userSchool;
+      });
+
+      userSchools = await Promise.all(schoolPromises);
 
       setUserSchools(userSchools);
     } catch (error) {
@@ -198,7 +200,7 @@ export default function Home() {
       {!loading && userRole === "donor" && (
         <div>
           <MapContainer
-            center={[-25.2637, -57.5759]} // Set a default center
+            center={[-25.2637, -57.5759]}
             zoom={10}
             style={{ height: "600px", width: "100%" }}
           >

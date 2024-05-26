@@ -37,7 +37,10 @@ function App() {
           </Route>
           <Route path="/school/:schoolId" element={<School />} />
           <Route path="/create-listing" element={<PrivateRoute />}>
-            <Route path="/create-listing" element={<CreateListing />} />
+            <Route
+              path="/create-listing/:instituteId"
+              element={<CreateListing />}
+            />
           </Route>
           <Route path="/edit-listing" element={<PrivateRoute />}>
             <Route path="/edit-listing/:listingId" element={<EditListing />} />
