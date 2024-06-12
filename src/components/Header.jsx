@@ -24,13 +24,16 @@ export default function Header() {
   return (
     <div className="sticky top-0 z-40 border-b bg-red-100 shadow-sm">
       <header className="mx-auto flex max-w-6xl items-center justify-between px-3">
-        <div>
+        <div
+          className="flex cursor-pointer items-center"
+          onClick={() => navigate("/")}
+        >
           <img
             src="https://www.svgrepo.com/show/125442/school.svg"
             alt="logo"
-            className="h-5 cursor-pointer"
-            onClick={() => navigate("/")}
+            className="h-5"
           />
+          <span className="ml-2 font-semibold">Potenciar Escuelas</span>
         </div>
         <div>
           <ul className="flex space-x-10">
