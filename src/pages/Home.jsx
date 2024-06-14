@@ -10,6 +10,7 @@ import {
   orderBy,
   updateDoc,
   serverTimestamp,
+  limit,
 } from "firebase/firestore";
 import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
@@ -27,6 +28,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState("");
   const [schools, setSchools] = useState([]);
+  const [listings, setListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,6 +45,7 @@ export default function Home() {
             await fetchUserSchools(user.uid);
           } else if (userSnap.data().role === "donor") {
             await fetchSchools();
+            await fetchListings();
           }
         } else {
           console.error("No user data available");
@@ -116,6 +119,42 @@ export default function Home() {
       schools = await Promise.all(fetchInstitutesPromises);
 
       setSchools(schools);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }
+
+  async function fetchListings() {
+    try {
+      const ListingRef = collection(db, "pedidos");
+      const q = query(
+        ListingRef,
+        where("estado", "==", "pendiente"),
+        orderBy("fecha_creacion", "asc"),
+        limit(4)
+      );
+      const querySnapshot = await getDocs(q);
+      let listings = [];
+
+      const fetchListingItemsPromises = querySnapshot.docs.map(async (doc) => {
+        let listing = { id: doc.id, data: doc.data(), listingItems: [] };
+
+        const ListingItemsRef = collection(doc.ref, "articulos");
+        const listingItemsSnapshot = await getDocs(ListingItemsRef);
+        listingItemsSnapshot.forEach((listingItemDoc) => {
+          listing.listingItems.push({
+            id: listingItemDoc.id,
+            data: listingItemDoc.data(),
+          });
+        });
+
+        return listing;
+      });
+
+      listings = await Promise.all(fetchListingItemsPromises);
+
+      setListings(listings);
+      console.log(listings);
     } catch (error) {
       toast.error(error.message);
     }
@@ -198,19 +237,21 @@ export default function Home() {
       )}
 
       {!loading && userRole === "donor" && (
-        <div>
-          <MapContainer
-            center={[-25.2637, -57.5759]}
-            zoom={10}
-            style={{ height: "600px", width: "100%" }}
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
-            />
-            <MapWithMarkers />
-          </MapContainer>
-        </div>
+        <>
+          <div>
+            <MapContainer
+              center={[-25.2637, -57.5759]}
+              zoom={10}
+              style={{ height: "600px", width: "100%" }}
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+              />
+              <MapWithMarkers />
+            </MapContainer>
+          </div>
+        </>
       )}
     </div>
   );
