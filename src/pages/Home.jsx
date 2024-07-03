@@ -23,10 +23,11 @@ import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import ListingCard from "../components/ListingCard";
 
 export default function Home() {
   const navigate = useNavigate();
-  const [userRole, setUserRole] = useState("");
+  const [userData, setUserData] = useState(null);
   const [schools, setSchools] = useState([]);
   const [listings, setListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
@@ -40,7 +41,7 @@ export default function Home() {
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
-          setUserRole(userSnap.data().role);
+          setUserData(userSnap.data());
           if (userSnap.data().role === "schoolRep") {
             await fetchUserSchools(user.uid);
           } else if (userSnap.data().role === "donor") {
@@ -52,7 +53,7 @@ export default function Home() {
         }
         setLoading(false);
       } else {
-        // Handle the case where no user is signed in
+        navigate("/sign-in");
       }
     });
 
@@ -214,7 +215,7 @@ export default function Home() {
 
   return (
     <div>
-      {!loading && userRole === "schoolRep" && userSchools.length > 0 && (
+      {!loading && userData.role === "schoolRep" && userSchools.length > 0 && (
         <div className="mx-auto mt-6 max-w-full px-3">
           <>
             <h2 className="mb-6 text-center text-2xl font-semibold">
@@ -236,9 +237,29 @@ export default function Home() {
         </div>
       )}
 
-      {!loading && userRole === "donor" && (
+      {!loading && userData.role === "donor" && (
         <>
+          <div className="mx-auto mt-6 max-w-full px-3">
+            <>
+              <h2 className="mb-6 text-center text-2xl font-semibold">
+                Pedidos de Escuelas
+              </h2>
+              <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+                {listings.map((listing) => (
+                  <ListingCard
+                    key={listing.id}
+                    id={listing.id}
+                    listing={listing.data}
+                    listingItems={listing.listingItems}
+                  />
+                ))}
+              </ul>
+            </>
+          </div>
           <div>
+            <h2 className="mb-6 text-center text-2xl font-semibold">
+              Mapa Escolar
+            </h2>
             <MapContainer
               center={[-25.2637, -57.5759]}
               zoom={10}

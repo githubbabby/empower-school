@@ -13,9 +13,10 @@ export default function ForgotPassword() {
     e.preventDefault();
     try {
       const auth = getAuth();
+      auth.languageCode = "es";
       await sendPasswordResetEmail(auth, email);
       toast.warning(
-        "If there is an account associated with this email, you will receive a password reset email."
+        "Si existe una cuenta con ese correo, se enviará un correo de recuperación de contraseña. Por favor revise su bandeja de entrada."
       );
     } catch (error) {
       toast.error(error.message);
@@ -24,7 +25,7 @@ export default function ForgotPassword() {
   return (
     <section>
       <h1 className="mt-6 text-center text-3xl font-extrabold">
-        Forgot Password?
+        ¿Olvidó su contraseña?
       </h1>
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center px-6 py-11">
         <div className="mb-12 md:mb-6 md:w-[67%] lg:w-[50%]">
@@ -41,6 +42,7 @@ export default function ForgotPassword() {
               id="email"
               value={email}
               onChange={onChange}
+              required
               placeholder="Email"
               className="mb-6 w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
             />
@@ -52,7 +54,7 @@ export default function ForgotPassword() {
                   to="/sign-in"
                   className="transition duration-200 ease-in-out hover:text-blue-600 hover:underline"
                 >
-                  Sign in instead
+                  Ir a Iniciar sesión
                 </Link>
               </p>
             </div>
@@ -60,7 +62,7 @@ export default function ForgotPassword() {
               className="w-full rounded bg-red-600 px-4 py-2 font-medium uppercase text-white shadow-lg transition duration-200 ease-in-out hover:bg-red-700 hover:shadow-xl active:bg-red-900"
               type="submit"
             >
-              Send password reset email
+              Enviar correo de recuperación de contraseña
             </button>
           </form>
         </div>
