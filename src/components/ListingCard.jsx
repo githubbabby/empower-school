@@ -33,12 +33,14 @@ export default function ListingCard({ listing, listingItems, id }) {
           >
             <p>{listingItem.data.nombre_articulo}</p>
             <p>Cantidad: {listingItem.data.cantidad}</p>
-            <button
-              onClick={() => navigate(`/contact/${listingItem.id}`)}
-              className="transform rounded-full bg-pink-700 px-4 py-2 font-bold text-white transition duration-300 ease-in-out hover:-translate-y-1 hover:bg-pink-400"
-            >
-              Contactar
-            </button>
+            <div className="flex items-center justify-center">
+              <button
+                onClick={() => navigate(`/contact/${listingItem.id}`)}
+                className="my-2 transform rounded-full bg-pink-700 px-2 py-1 font-bold text-white transition duration-300 ease-in-out hover:-translate-y-1 hover:bg-pink-500"
+              >
+                Contactar
+              </button>
+            </div>
           </li>
         ))}
       </ul>
