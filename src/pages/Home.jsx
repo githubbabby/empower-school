@@ -245,14 +245,16 @@ export default function Home() {
                 Pedidos de Escuelas
               </h2>
               <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                {listings.map((listing) => (
-                  <ListingCard
-                    key={listing.id}
-                    id={listing.id}
-                    listing={listing.data}
-                    listingItems={listing.listingItems}
-                  />
-                ))}
+                {listings.map((listing) =>
+                  listing.listingItems.map((item) => (
+                    <ListingCard
+                      key={item.id} // Assuming each item has a unique ID
+                      id={item.id} // Pass the item's ID
+                      listing={listing.data} // Pass the parent listing's data if needed
+                      listingItem={item.data} // Pass the current listing item
+                    />
+                  ))
+                )}
               </ul>
             </>
           </div>
