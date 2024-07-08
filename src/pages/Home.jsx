@@ -24,6 +24,7 @@ import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -215,12 +216,26 @@ export default function Home() {
 
   return (
     <div>
-      {!loading && userData.role === "schoolRep" && userSchools.length > 0 && (
+      {!loading && userData.role === "schoolRep" && (
         <div className="mx-auto mt-6 max-w-full px-3">
-          <>
-            <h2 className="mb-6 text-center text-2xl font-semibold">
-              Mis Escuelas
-            </h2>
+          <h2 className="mb-6 text-center text-2xl font-semibold">
+            {userSchools.length === 0
+              ? "No hay escuelas registradas"
+              : "Mis Escuelas"}
+          </h2>
+          {userSchools.length === 0 ? (
+            <button
+              type="submit"
+              className="mb-6 w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
+            >
+              <Link
+                to="/create-school"
+                className="flex items-center justify-center"
+              >
+                Registrar escuela
+              </Link>
+            </button>
+          ) : (
             <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
               {userSchools.map((userSchool) => (
                 <SchoolItem
@@ -233,7 +248,7 @@ export default function Home() {
                 />
               ))}
             </ul>
-          </>
+          )}
         </div>
       )}
 

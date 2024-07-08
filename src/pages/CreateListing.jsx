@@ -142,16 +142,6 @@ export default function CreateListing() {
                 minLength={3}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="mt-6 text-lg font-semibold">Cantidad</p>
-              <input
-                type="number"
-                name="cantidad"
-                value={listingItem.cantidad || ""}
-                onChange={(event) => handleListingItemChange(index, event)}
-                min={1}
-                required
-                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
 
               <p className="mt-6 text-lg font-semibold">Categoria</p>
               <Select
@@ -182,7 +172,7 @@ export default function CreateListing() {
                 }}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="mt-6 text-lg font-semibold">Ingrediente</p>
+              <p className="mt-6 text-lg font-semibold">Item</p>
               {listingItem.categoria && (
                 <Select
                   options={breakfastlunchItems
@@ -206,7 +196,16 @@ export default function CreateListing() {
                   className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               )}
-
+              <p className="mt-6 text-lg font-semibold">Cantidad</p>
+              <input
+                type="number"
+                name="cantidad"
+                value={listingItem.cantidad || ""}
+                onChange={(event) => handleListingItemChange(index, event)}
+                min={1}
+                required
+                className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
               <p className="mt-6 text-lg font-semibold">Observacion</p>
               <textarea
                 name="observacion"

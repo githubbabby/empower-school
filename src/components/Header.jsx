@@ -47,7 +47,7 @@ export default function Header() {
             >
               Inicio
             </li>
-            <li
+            {/* <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${
                 pathMatchRoute("/schools")
                   ? "border-b-red-500 text-black"
@@ -56,7 +56,7 @@ export default function Header() {
               onClick={() => navigate("/schools")}
             >
               Escuelas
-            </li>
+            </li> */}
             <li
               className={`cursor-pointer border-b-[3px] py-3 text-sm font-semibold ${
                 (pathMatchRoute("/sign-in") || pathMatchRoute("/profile")) &&

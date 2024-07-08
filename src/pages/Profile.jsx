@@ -384,19 +384,6 @@ export default function Profile() {
             </div>
           </form>
         </div>
-        {userRole === "schoolRep" && (
-          <button
-            type="submit"
-            className="mb-6 w-full rounded bg-red-700 px-4 py-2 text-xl text-white transition duration-300 ease-in-out hover:bg-red-900"
-          >
-            <Link
-              to="/create-school"
-              className="flex items-center justify-center"
-            >
-              Registrar escuela
-            </Link>
-          </button>
-        )}
       </section>
     </>
   );
