@@ -1,14 +1,14 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
 export default function ListingCard({ listing, listingItem, id }) {
-  if (listing.eliminado) return null;
+  const [isFlipped, setIsFlipped] = useState(false);
 
-  const navigate = useNavigate();
+  const toggleFlip = () => setIsFlipped(!isFlipped);
 
   const calculateRelativeDate = (creationDate) => {
     if (!creationDate) return null;
@@ -29,34 +29,54 @@ export default function ListingCard({ listing, listingItem, id }) {
   const relativeDate = calculateRelativeDate(creationDate);
 
   return (
-    <li className="relative m-2.5 flex flex-col items-center justify-between overflow-hidden rounded-md bg-white shadow-md transition-shadow duration-150 hover:shadow-xl">
-      <Link className="contents" to={`/listing/${id}`}>
-        <div className="w-full p-2.5">
-          <div className="flex items-start justify-between">
-            <p className="flex-grow text-xl font-semibold text-[#9d4545]">
-              {listingItem.nombre_articulo}
-            </p>
-            {relativeDate && (
-              <div className="ml-2 rounded-md bg-[#911a1a] px-2 py-1 text-xs font-semibold uppercase text-white shadow-lg">
-                {relativeDate}
+    <div className="mb-9 flex items-center justify-center">
+      <div className="group h-96 w-96 [perspective:500px]" onClick={toggleFlip}>
+        <div
+          className={`relative h-full w-full rounded-xl shadow-2xl transition-all duration-500 [transform-style:preserve-3d] ${
+            isFlipped ? "[transform:rotateY(180deg)]" : ""
+          }`}
+        >
+          {/* Front of the card */}
+          <div className="absolute inset-0 rounded-xl bg-white [backface-visibility:hidden]">
+            <Link className="contents">
+              <div className="w-full p-2.5">
+                <div className="flex items-start justify-between">
+                  <p className="flex-grow text-xl font-semibold text-[#9d4545]">
+                    {listingItem.nombre_articulo}
+                  </p>
+                  {relativeDate && (
+                    <div className="ml-2 rounded-md bg-[#911a1a] px-2 py-1 text-xs font-semibold uppercase text-white shadow-lg">
+                      {relativeDate}
+                    </div>
+                  )}
+                </div>
+                <p className="m-0 text-sm font-semibold text-gray-600">
+                  {listingItem.ingrediente} - {listingItem.categoria}
+                </p>
+                <br />
+                <p className="mb-6 text-sm font-semibold text-gray-600">
+                  {listingItem.observacion}
+                </p>
+                <br />
+                <div className="absolute bottom-2 left-2 flex space-x-2">
+                  <p className="m-0 text-xl font-bold">
+                    {listingItem.cantidad} unidades
+                  </p>
+                </div>
               </div>
-            )}
+            </Link>
           </div>
-          <p className="m-0 text-sm font-semibold text-gray-600">
-            {listingItem.ingrediente} - {listingItem.categoria}
-          </p>
-          <br />
-          <p className="mb-6 text-sm font-semibold text-gray-600">
-            {listingItem.observacion}
-          </p>
-          <br />
-          <div className="absolute bottom-2 left-2 flex space-x-2">
-            <p className="m-0 text-xl font-bold">
-              {listingItem.cantidad} unidades
-            </p>
+          {/* Back of the card */}
+          <div className="absolute inset-0 rounded-xl bg-white px-12 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <div className="flex min-h-full w-full flex-col items-center justify-center  text-2xl font-semibold ">
+              {/* Display listing information here */}
+              <p>{listing.nombre}</p>
+              <p>{relativeDate}</p>
+              {/* Add more listing details as needed */}
+            </div>
           </div>
         </div>
-      </Link>
-    </li>
+      </div>
+    </div>
   );
 }
