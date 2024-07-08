@@ -30,7 +30,10 @@ export default function ListingCard({ listing, listingItem, id }) {
 
   return (
     <div className="mb-9 flex items-center justify-center">
-      <div className="group h-96 w-96 [perspective:500px]" onClick={toggleFlip}>
+      <div
+        className="group h-72 w-11/12 transform transition duration-300 [perspective:500px] hover:scale-105 hover:shadow-lg"
+        onClick={toggleFlip}
+      >
         <div
           className={`relative h-full w-full rounded-xl shadow-2xl transition-all duration-500 [transform-style:preserve-3d] ${
             isFlipped ? "[transform:rotateY(180deg)]" : ""
@@ -67,7 +70,7 @@ export default function ListingCard({ listing, listingItem, id }) {
             </Link>
           </div>
           {/* Back of the card */}
-          <div className="absolute inset-0 rounded-xl bg-white px-12 text-center [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <div className="absolute inset-0 rounded-xl bg-white px-12 text-center [transform:rotateY(180deg)] [backface-visibility:hidden]">
             <div className="flex min-h-full w-full flex-col items-center justify-center  text-2xl font-semibold ">
               {/* Display listing information here */}
               <p>{listing.nombre}</p>
