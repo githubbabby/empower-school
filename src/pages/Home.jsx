@@ -30,6 +30,7 @@ export default function Home() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
   const [schools, setSchools] = useState([]);
+  const [distance, setDistance] = useState(10);
   const [listings, setListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -256,6 +257,21 @@ export default function Home() {
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
             <>
+              <span className="px-3 text-base font-semibold">
+                Quiero ver pedidos de escuelas en un radio de
+                <select
+                  value={distance}
+                  onChange={(e) => setDistance(Number(e.target.value))}
+                  className="mb-4 inline-block"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                </select>
+                kilometros
+              </span>
               <h2 className="mb-6 text-center text-2xl font-semibold">
                 Pedidos de Escuelas
               </h2>
@@ -263,17 +279,17 @@ export default function Home() {
                 {listings.map((listing) =>
                   listing.listingItems.map((item) => (
                     <ListingCard
-                      key={item.id} // Assuming each item has a unique ID
-                      id={item.id} // Pass the item's ID
-                      listing={listing.data} // Pass the parent listing's data if needed
-                      listingItem={item.data} // Pass the current listing item
+                      key={item.id}
+                      id={item.id}
+                      listing={listing.data}
+                      listingItem={item.data}
                     />
                   ))
                 )}
               </ul>
             </>
           </div>
-          <div>
+          <div className="mb-6 px-6">
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Mapa Escolar
             </h2>

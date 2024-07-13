@@ -74,8 +74,12 @@ export default function ListingCard({ listing, listingItem, id }) {
             <div className="flex min-h-full w-full flex-col items-center justify-center  text-2xl font-semibold ">
               {/* Display listing information here */}
               <p>{listing.nombre}</p>
-              <p>{relativeDate}</p>
-              {/* Add more listing details as needed */}
+              <Link
+                to={`/listing/${id}`}
+                className="mt-4 rounded-3xl bg-green-600 px-4 py-2 text-white transition duration-500 ease-in-out hover:bg-green-800"
+              >
+                Ver detalles
+              </Link>
             </div>
           </div>
         </div>
