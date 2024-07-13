@@ -60,7 +60,9 @@ export default function SchoolItem({
           >
             <p>{institute.data.nombre_instituto}</p>
             <p>Turno: {institute.data.turno}</p>
-            <button onClick={() => navigate(`/create-listing/${institute.id}`)}>
+            <button
+              onClick={() => navigate(`/create-listing/${id}/${institute.id}`)}
+            >
               Crear pedido
             </button>
           </li>

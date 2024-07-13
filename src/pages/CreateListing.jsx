@@ -1,17 +1,25 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "../firebase.config";
 import { toast } from "react-toastify";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import Spinner from "../components/Spinner";
 import { useParams, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import { breakfastlunchItems } from "../datasets/breakfastlunchItems";
 
 export default function CreateListing() {
+  const auth = getAuth();
   const params = useParams();
   const navigate = useNavigate();
-  const auth = getAuth();
+  const [school, setSchool] = useState({});
+
   const [loading, setLoading] = useState(false);
 
   const [listingData, setListingData] = useState({
@@ -19,6 +27,24 @@ export default function CreateListing() {
     observacion: "",
   });
   const [listingItems, setListingItems] = useState([{}]);
+
+  useEffect(() => {
+    async function fetchSchool() {
+      try {
+        const docRef = doc(db, "escuelas", params.schoolId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setSchool(docSnap.data());
+          console.log("Document data:", docSnap.data());
+        } else {
+          toast.error("No se encontró el instituto");
+        }
+      } catch (error) {
+        toast.error("Error al obtener el instituto");
+      }
+    }
+    fetchSchool();
+  }, [params.schoolId, params.instituteId]);
 
   const handleAddListingItem = () => {
     setListingItems([...listingItems, {}]);
@@ -62,6 +88,8 @@ export default function CreateListing() {
       id_instituto: params.instituteId,
       fecha_creacion: serverTimestamp(),
       estado: "pendiente",
+      latitud: school.latitud,
+      longitud: school.longitud,
     };
 
     try {

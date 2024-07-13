@@ -14,6 +14,7 @@ import CreateSchool from "./pages/CreateSchool";
 import EditSchool from "./pages/EditSchool";
 import CreateListing from "./pages/CreateListing";
 import EditListing from "./pages/EditListing";
+import Listing from "./pages/Listing";
 
 function App() {
   return (
@@ -37,14 +38,15 @@ function App() {
           </Route>
           <Route path="/school/:schoolId" element={<School />} />
           <Route path="/create-listing" element={<PrivateRoute />}>
-            <Route
-              path="/create-listing/:instituteId"
-              element={<CreateListing />}
-            />
+            <Route path=":schoolId/:instituteId" element={<CreateListing />} />
           </Route>
           <Route path="/edit-listing" element={<PrivateRoute />}>
             <Route path="/edit-listing/:listingId" element={<EditListing />} />
           </Route>
+          <Route
+            path="/listing/:listingId/:listingItemId"
+            element={<Listing />}
+          />
         </Routes>
       </Router>
       <ToastContainer

@@ -5,7 +5,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 
 dayjs.extend(relativeTime);
 
-export default function ListingCard({ listing, listingItem, id }) {
+export default function ListingCard({ id, listingItem, listingId, listing }) {
   const [isFlipped, setIsFlipped] = useState(false);
 
   const toggleFlip = () => setIsFlipped(!isFlipped);
@@ -75,7 +75,7 @@ export default function ListingCard({ listing, listingItem, id }) {
               {/* Display listing information here */}
               <p>{listing.nombre}</p>
               <Link
-                to={`/listing/${id}`}
+                to={`/listing/${listingId}/${id}`}
                 className="mt-4 rounded-3xl bg-green-600 px-4 py-2 text-white transition duration-500 ease-in-out hover:bg-green-800"
               >
                 Ver detalles

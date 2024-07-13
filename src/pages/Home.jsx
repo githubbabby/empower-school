@@ -133,8 +133,7 @@ export default function Home() {
       const q = query(
         ListingRef,
         where("estado", "==", "pendiente"),
-        orderBy("fecha_creacion", "asc"),
-        limit(4)
+        orderBy("fecha_creacion", "asc")
       );
       const querySnapshot = await getDocs(q);
       let listings = [];
@@ -219,6 +218,14 @@ export default function Home() {
     <div>
       {!loading && userData.role === "schoolRep" && (
         <div className="mx-auto mt-6 max-w-full px-3">
+          <div className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg">
+            <p className="text-md text-center font-semibold">
+              Tiene un nuevo donante interesado en ayudar a su escuela
+            </p>
+            <button className="text-md rounded bg-red-700 px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-red-900">
+              <Link to="/donor">Ver detalles</Link>
+            </button>
+          </div>
           <h2 className="mb-6 text-center text-2xl font-semibold">
             {userSchools.length === 0
               ? "No hay escuelas registradas"
@@ -281,8 +288,9 @@ export default function Home() {
                     <ListingCard
                       key={item.id}
                       id={item.id}
-                      listing={listing.data}
                       listingItem={item.data}
+                      listingId={listing.id}
+                      listing={listing.data}
                     />
                   ))
                 )}
