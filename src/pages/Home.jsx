@@ -25,6 +25,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
+import haversineDistance from "haversine-distance";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function Home() {
   const [schools, setSchools] = useState([]);
   const [distance, setDistance] = useState(10);
   const [listings, setListings] = useState([]);
+  const [filteredListings, setFilteredListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -62,6 +64,30 @@ export default function Home() {
     // Cleanup function to unsubscribe from the listener when the component unmounts
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    const newFilteredListings = listings
+      .filter((listing) => {
+        if (listing.data.latitud == null || listing.data.longitud == null) {
+          return false;
+        }
+
+        const listingPoint = {
+          lat: listing.data.latitud,
+          lng: listing.data.longitud,
+        };
+        const userPoint = { lat: userData.latitud, lng: userData.longitud };
+        const dist = haversineDistance(listingPoint, userPoint) / 1000; // Convert meters to kilometers
+        return dist <= distance;
+      })
+      .map((listing) => ({
+        ...listing,
+        listingItems: listing.listingItems.filter((item) => true),
+      }))
+      .filter((listing) => listing.listingItems.length > 0);
+
+    setFilteredListings(newFilteredListings);
+  }, [distance, listings]);
 
   async function fetchUserSchools(uid) {
     try {
@@ -156,7 +182,6 @@ export default function Home() {
       listings = await Promise.all(fetchListingItemsPromises);
 
       setListings(listings);
-      console.log(listings);
     } catch (error) {
       toast.error(error.message);
     }
@@ -275,7 +300,7 @@ export default function Home() {
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
-                  <option value={200}>200</option>
+                  <option value={300}>300</option>
                 </select>
                 kilometros
               </span>
@@ -283,7 +308,7 @@ export default function Home() {
                 Pedidos de Escuelas
               </h2>
               <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                {listings.map((listing) =>
+                {filteredListings.map((listing) =>
                   listing.listingItems.map((item) => (
                     <ListingCard
                       key={item.id}
