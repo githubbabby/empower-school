@@ -25,7 +25,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
-import haversineDistance from "haversine-distance";
+import axios from "axios";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -36,6 +36,58 @@ export default function Home() {
   const [filteredListings, setFilteredListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
+    const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
+      import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
+    }`;
+
+    const body = {
+      origin: {
+        location: {
+          latLng: {
+            latitude: lat1,
+            longitude: lng1,
+          },
+        },
+      },
+      destination: {
+        location: {
+          latLng: {
+            latitude: lat2,
+            longitude: lng2,
+          },
+        },
+      },
+      travelMode: "DRIVE",
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-FieldMask":
+            "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
+        },
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+
+      if (data.routes && data.routes.length > 0) {
+        const distanceInMeters = data.routes[0].distanceMeters;
+        const distanceInKm = distanceInMeters / 1000;
+        console.log("Distance in km:", distanceInKm);
+        return distanceInKm;
+      } else {
+        console.error("Error fetching routes:", data);
+        return null;
+      }
+    } catch (error) {
+      console.error("Error fetching routes:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const auth = getAuth();
@@ -66,10 +118,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const newFilteredListings = listings
-      .filter((listing) => {
+    const filterListings = async () => {
+      const newFilteredListings = [];
+
+      for (const listing of listings) {
         if (listing.data.latitud == null || listing.data.longitud == null) {
-          return false;
+          continue; // Skip this listing if lat or lng is null
         }
 
         const listingPoint = {
@@ -77,17 +131,30 @@ export default function Home() {
           lng: listing.data.longitud,
         };
         const userPoint = { lat: userData.latitud, lng: userData.longitud };
-        const dist = haversineDistance(listingPoint, userPoint) / 1000; // Convert meters to kilometers
-        return dist <= distance;
-      })
-      .map((listing) => ({
-        ...listing,
-        listingItems: listing.listingItems.filter((item) => true),
-      }))
-      .filter((listing) => listing.listingItems.length > 0);
 
-    setFilteredListings(newFilteredListings);
-  }, [distance, listings]);
+        const dist = await calculateDrivingDistance(
+          listingPoint.lat,
+          listingPoint.lng,
+          userPoint.lat,
+          userPoint.lng
+        );
+
+        if (dist !== null && dist <= distance) {
+          const filteredItems = listing.listingItems.filter((item) => true); // Assuming you still need to filter items based on some criteria
+          if (filteredItems.length > 0) {
+            newFilteredListings.push({
+              ...listing,
+              listingItems: filteredItems,
+            });
+          }
+        }
+      }
+
+      setFilteredListings(newFilteredListings);
+    };
+
+    filterListings();
+  }, [distance, listings, userData]);
 
   async function fetchUserSchools(uid) {
     try {
@@ -300,7 +367,7 @@ export default function Home() {
                   <option value={25}>25</option>
                   <option value={50}>50</option>
                   <option value={100}>100</option>
-                  <option value={300}>300</option>
+                  <option value={450}>450</option>
                 </select>
                 kilometros
               </span>
