@@ -10,7 +10,6 @@ import {
   orderBy,
   updateDoc,
   serverTimestamp,
-  limit,
 } from "firebase/firestore";
 import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
@@ -25,7 +24,63 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
-import axios from "axios";
+
+const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
+  const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
+    import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
+  }`;
+  const body = {
+    origin: { location: { latLng: { latitude: lat1, longitude: lng1 } } },
+    destination: { location: { latLng: { latitude: lat2, longitude: lng2 } } },
+    travelMode: "DRIVE",
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-FieldMask": "routes.distanceMeters",
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (data.routes && data.routes.length > 0) {
+      return data.routes[0].distanceMeters / 1000;
+    }
+    console.error("Error fetching routes:", data);
+    return null;
+  } catch (error) {
+    console.error("Error fetching routes:", error);
+    return null;
+  }
+};
+
+const MapWithMarkers = ({ schools }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const markers = L.markerClusterGroup();
+
+    schools.forEach((school) => {
+      if (school.data.latitud && school.data.longitud) {
+        const marker = L.marker([
+          school.data.latitud,
+          school.data.longitud,
+        ]).bindPopup(`<b>${school.data.nombre}</b>`);
+        markers.addLayer(marker);
+      }
+    });
+
+    map.addLayer(markers);
+
+    return () => {
+      map.removeLayer(markers);
+    };
+  }, [map, schools]);
+
+  return null;
+};
 
 export default function Home() {
   const navigate = useNavigate();
@@ -36,58 +91,7 @@ export default function Home() {
   const [filteredListings, setFilteredListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
-    const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
-      import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
-    }`;
-
-    const body = {
-      origin: {
-        location: {
-          latLng: {
-            latitude: lat1,
-            longitude: lng1,
-          },
-        },
-      },
-      destination: {
-        location: {
-          latLng: {
-            latitude: lat2,
-            longitude: lng2,
-          },
-        },
-      },
-      travelMode: "DRIVE",
-    };
-
-    try {
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Goog-FieldMask":
-            "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
-        },
-        body: JSON.stringify(body),
-      });
-      const data = await response.json();
-
-      if (data.routes && data.routes.length > 0) {
-        const distanceInMeters = data.routes[0].distanceMeters;
-        const distanceInKm = distanceInMeters / 1000;
-        console.log("Distance in km:", distanceInKm);
-        return distanceInKm;
-      } else {
-        console.error("Error fetching routes:", data);
-        return null;
-      }
-    } catch (error) {
-      console.error("Error fetching routes:", error);
-      return null;
-    }
-  };
+  const [distances, setDistances] = useState({});
 
   useEffect(() => {
     const auth = getAuth();
@@ -95,7 +99,6 @@ export default function Home() {
       if (user) {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
-
         if (userSnap.exists()) {
           setUserData(userSnap.data());
           if (userSnap.data().role === "schoolRep") {
@@ -113,18 +116,17 @@ export default function Home() {
       }
     });
 
-    // Cleanup function to unsubscribe from the listener when the component unmounts
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   useEffect(() => {
-    const filterListings = async () => {
-      const newFilteredListings = [];
+    const fetchDistances = async () => {
+      if (!userData) return;
+
+      const newDistances = {};
 
       for (const listing of listings) {
-        if (listing.data.latitud == null || listing.data.longitud == null) {
-          continue; // Skip this listing if lat or lng is null
-        }
+        if (!listing.data.latitud || !listing.data.longitud) continue;
 
         const listingPoint = {
           lat: listing.data.latitud,
@@ -139,126 +141,118 @@ export default function Home() {
           userPoint.lng
         );
 
-        if (dist !== null && dist <= distance) {
-          const filteredItems = listing.listingItems.filter((item) => true); // Assuming you still need to filter items based on some criteria
-          if (filteredItems.length > 0) {
-            newFilteredListings.push({
-              ...listing,
-              listingItems: filteredItems,
-            });
-          }
+        if (dist !== null) {
+          newDistances[listing.id] = dist;
         }
       }
 
+      setDistances(newDistances);
+      console.log(newDistances);
+    };
+
+    fetchDistances();
+  }, [userData, listings]);
+
+  useEffect(() => {
+    const filterListings = () => {
+      const newFilteredListings = listings.filter(
+        (listing) => distances[listing.id] <= distance
+      );
       setFilteredListings(newFilteredListings);
     };
 
     filterListings();
-  }, [distance, listings, userData]);
+  }, [distance, distances, listings]);
 
-  async function fetchUserSchools(uid) {
+  const fetchUserSchools = async (uid) => {
     try {
-      const SchoolRef = collection(db, "escuelas");
       const q = query(
-        SchoolRef,
+        collection(db, "escuelas"),
         where("id_usuario", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
-      let userSchools = [];
-
-      const schoolPromises = querySnapshot.docs.map(async (doc) => {
-        let userSchool = { id: doc.id, data: doc.data(), institutes: [] };
-
-        const InstitutesRef = collection(doc.ref, "institutos");
-        const institutesSnapshot = await getDocs(InstitutesRef);
-        institutesSnapshot.forEach((instituteDoc) => {
-          userSchool.institutes.push({
-            id: instituteDoc.id,
-            data: instituteDoc.data(),
+      const userSchools = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const userSchool = { id: doc.id, data: doc.data(), institutes: [] };
+          const institutesSnapshot = await getDocs(
+            collection(doc.ref, "institutos")
+          );
+          institutesSnapshot.forEach((instituteDoc) => {
+            userSchool.institutes.push({
+              id: instituteDoc.id,
+              data: instituteDoc.data(),
+            });
           });
-        });
-
-        return userSchool;
-      });
-
-      userSchools = await Promise.all(schoolPromises);
-
+          return userSchool;
+        })
+      );
       setUserSchools(userSchools);
     } catch (error) {
       toast.error(error.message);
     }
-  }
+  };
 
-  async function fetchSchools() {
+  const fetchSchools = async () => {
     try {
-      const SchoolRef = collection(db, "escuelas");
-      const q = query(SchoolRef, orderBy("fecha_creacion", "desc"));
+      const q = query(
+        collection(db, "escuelas"),
+        orderBy("fecha_creacion", "desc")
+      );
       const querySnapshot = await getDocs(q);
-      let schools = [];
-
-      const fetchInstitutesPromises = querySnapshot.docs.map(async (doc) => {
-        let school = { id: doc.id, data: doc.data(), institutes: [] };
-
-        const InstitutesRef = collection(doc.ref, "institutos");
-        const institutesSnapshot = await getDocs(InstitutesRef);
-        institutesSnapshot.forEach((instituteDoc) => {
-          school.institutes.push({
-            id: instituteDoc.id,
-            data: instituteDoc.data(),
+      const schools = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const school = { id: doc.id, data: doc.data(), institutes: [] };
+          const institutesSnapshot = await getDocs(
+            collection(doc.ref, "institutos")
+          );
+          institutesSnapshot.forEach((instituteDoc) => {
+            school.institutes.push({
+              id: instituteDoc.id,
+              data: instituteDoc.data(),
+            });
           });
-        });
-
-        return school;
-      });
-
-      schools = await Promise.all(fetchInstitutesPromises);
-
+          return school;
+        })
+      );
       setSchools(schools);
     } catch (error) {
       toast.error(error.message);
     }
-  }
+  };
 
-  async function fetchListings() {
+  const fetchListings = async () => {
     try {
-      const ListingRef = collection(db, "pedidos");
       const q = query(
-        ListingRef,
+        collection(db, "pedidos"),
         where("estado", "==", "pendiente"),
         orderBy("fecha_creacion", "asc")
       );
       const querySnapshot = await getDocs(q);
-      let listings = [];
-
-      const fetchListingItemsPromises = querySnapshot.docs.map(async (doc) => {
-        let listing = { id: doc.id, data: doc.data(), listingItems: [] };
-
-        const ListingItemsRef = collection(doc.ref, "articulos");
-        const listingItemsSnapshot = await getDocs(ListingItemsRef);
-        listingItemsSnapshot.forEach((listingItemDoc) => {
-          listing.listingItems.push({
-            id: listingItemDoc.id,
-            data: listingItemDoc.data(),
+      const listings = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const listing = { id: doc.id, data: doc.data(), listingItems: [] };
+          const listingItemsSnapshot = await getDocs(
+            collection(doc.ref, "articulos")
+          );
+          listingItemsSnapshot.forEach((listingItemDoc) => {
+            listing.listingItems.push({
+              id: listingItemDoc.id,
+              data: listingItemDoc.data(),
+            });
           });
-        });
-
-        return listing;
-      });
-
-      listings = await Promise.all(fetchListingItemsPromises);
-
+          return listing;
+        })
+      );
       setListings(listings);
     } catch (error) {
       toast.error(error.message);
     }
-  }
+  };
 
-  function onEdit(schoolId) {
-    navigate(`/edit-school/${schoolId}`);
-  }
+  const onEdit = (schoolId) => navigate(`/edit-school/${schoolId}`);
 
-  async function onDelete(schoolId) {
+  const onDelete = async (schoolId) => {
     if (window.confirm("Esta seguro de eliminar esta escuela?")) {
       try {
         const docRef = doc(db, "escuelas", schoolId);
@@ -274,32 +268,6 @@ export default function Home() {
         toast.error(error.message);
       }
     }
-  }
-
-  const MapWithMarkers = () => {
-    const map = useMap();
-
-    useEffect(() => {
-      const markers = L.markerClusterGroup();
-
-      schools.forEach((school) => {
-        if (school.data.latitud && school.data.longitud) {
-          const marker = L.marker([
-            school.data.latitud,
-            school.data.longitud,
-          ]).bindPopup(`<b>${school.data.nombre}</b>`);
-          markers.addLayer(marker);
-        }
-      });
-
-      map.addLayer(markers);
-
-      return () => {
-        map.removeLayer(markers);
-      };
-    }, [map, schools]);
-
-    return null;
   };
 
   if (loading) {
@@ -308,7 +276,7 @@ export default function Home() {
 
   return (
     <div>
-      {!loading && userData.role === "schoolRep" && (
+      {userData.role === "schoolRep" && (
         <div className="mx-auto mt-6 max-w-full px-3">
           <div className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg">
             <p className="text-md text-center font-semibold">
@@ -352,42 +320,40 @@ export default function Home() {
         </div>
       )}
 
-      {!loading && userData.role === "donor" && (
+      {userData.role === "donor" && (
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
-            <>
-              <span className="px-3 text-base font-semibold">
-                Quiero ver pedidos de escuelas en un radio de
-                <select
-                  value={distance}
-                  onChange={(e) => setDistance(Number(e.target.value))}
-                  className="mb-4 inline-block"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                  <option value={450}>450</option>
-                </select>
-                kilometros
-              </span>
-              <h2 className="mb-6 text-center text-2xl font-semibold">
-                Pedidos de Escuelas
-              </h2>
-              <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
-                {filteredListings.map((listing) =>
-                  listing.listingItems.map((item) => (
-                    <ListingCard
-                      key={item.id}
-                      id={item.id}
-                      listingItem={item.data}
-                      listingId={listing.id}
-                      listing={listing.data}
-                    />
-                  ))
-                )}
-              </ul>
-            </>
+            <span className="px-3 text-base font-semibold">
+              Quiero ver pedidos de escuelas en un radio de
+              <select
+                value={distance}
+                onChange={(e) => setDistance(Number(e.target.value))}
+                className="mb-4 inline-block"
+              >
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={450}>450</option>
+              </select>
+              kilometros
+            </span>
+            <h2 className="mb-6 text-center text-2xl font-semibold">
+              Pedidos de Escuelas
+            </h2>
+            <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
+              {filteredListings.map((listing) =>
+                listing.listingItems.map((item) => (
+                  <ListingCard
+                    key={item.id}
+                    id={item.id}
+                    listingItem={item.data}
+                    listingId={listing.id}
+                    listing={listing.data}
+                  />
+                ))
+              )}
+            </ul>
           </div>
           <div className="mb-6 px-6">
             <h2 className="mb-6 text-center text-2xl font-semibold">
@@ -402,7 +368,7 @@ export default function Home() {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
               />
-              <MapWithMarkers />
+              <MapWithMarkers schools={schools} />
             </MapContainer>
           </div>
         </>
