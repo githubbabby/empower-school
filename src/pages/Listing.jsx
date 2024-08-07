@@ -7,13 +7,36 @@ import Spinner from "../components/Spinner";
 import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { MdLocationPin } from "react-icons/md";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 export default function Listing() {
   const params = useParams();
+  const navigate = useNavigate();
+  const [userData, setUserData] = useState(null);
   const [listing, setListing] = useState(null);
   const [listingItem, setListingItem] = useState(null);
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          setUserData(userSnap.data());
+        } else {
+          console.error("No user data available");
+        }
+      } else {
+        navigate("/sign-in");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     const fetchListingData = async () => {
@@ -135,9 +158,15 @@ export default function Listing() {
         </div>
       </div>
       <div className="flex items-center justify-center">
-        <button className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900">
-          Marcar como entregado 📦
-        </button>
+        {userData.role === "donor" ? (
+          <button className="m-4 rounded-lg bg-green-700 p-2 font-semibold text-white hover:bg-green-900">
+            Quiero comprometerme a ayudar con este pedido 🤝
+          </button>
+        ) : (
+          <button className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900">
+            Marcar como entregado 📦
+          </button>
+        )}
       </div>
     </main>
   );
