@@ -12,33 +12,42 @@ export default function Listing() {
   const params = useParams();
   const [listing, setListing] = useState(null);
   const [listingItem, setListingItem] = useState(null);
+  const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchListing = async () => {
-      const docRef = doc(db, "pedidos", params.listingId);
-      return getDoc(docRef);
-    };
+    const fetchListingData = async () => {
+      try {
+        const docRef = doc(db, "pedidos", params.listingId);
+        const listingSnap = await getDoc(docRef);
 
-    const fetchListingItem = async () => {
-      const docRef = doc(
-        db,
-        "pedidos",
-        params.listingId,
-        "articulos",
-        params.listingItemId
-      );
-      return getDoc(docRef);
-    };
-
-    Promise.all([fetchListing(), fetchListingItem()])
-      .then(([listingSnap, listingItemSnap]) => {
         if (listingSnap.exists()) {
           setListing(listingSnap.data());
+          const schoolDocRef = doc(
+            db,
+            "escuelas",
+            listingSnap.data().id_escuela
+          );
+          const schoolSnap = await getDoc(schoolDocRef);
+          if (schoolSnap.exists()) {
+            setSchool(schoolSnap.data());
+          } else {
+            console.log("No such document!");
+            toast.error("No se encontró la escuela");
+          }
         } else {
           console.log("No such document!");
           toast.error("No se encontró el pedido");
         }
+
+        const docRefItem = doc(
+          db,
+          "pedidos",
+          params.listingId,
+          "articulos",
+          params.listingItemId
+        );
+        const listingItemSnap = await getDoc(docRefItem);
 
         if (listingItemSnap.exists()) {
           setListingItem(listingItemSnap.data());
@@ -46,14 +55,15 @@ export default function Listing() {
           console.log("No such document!");
           toast.error("Error al obtener el pedido");
         }
-
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error getting documents:", error);
         toast.error("Error al obtener los pedidos");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchListingData();
   }, [params.listingId, params.listingItemId]);
 
   if (loading) {
@@ -75,13 +85,14 @@ export default function Listing() {
           </p>
           <div>
             <p className="mb-3 mt-9 text-sm font-semibold text-gray-700">
-              Escuela publica nro 324
+              {school.nombre}
             </p>
             <p className="mb-3 text-sm font-semibold text-gray-700">
-              Direccion: Isla Po'i casi Machareti
+              <MdLocationPin className="inline text-green-600" />{" "}
+              {school.direccion}
             </p>
             <p className="text-sm font-semibold text-gray-700">
-              Mariano Roque Alonso, Central
+              {school.distrito}, {school.departamento}
             </p>
           </div>
         </div>

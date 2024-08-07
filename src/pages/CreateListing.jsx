@@ -86,6 +86,7 @@ export default function CreateListing() {
       ...listingData,
       id_usuario: auth.currentUser.uid,
       id_instituto: params.instituteId,
+      id_escuela: params.schoolId,
       fecha_creacion: serverTimestamp(),
       estado: "pendiente",
       latitud: school.latitud,
