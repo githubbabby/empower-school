@@ -4,11 +4,12 @@ import { db } from "../firebase.config";
 import { doc, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
-import { getStorage, ref, getDownloadURL } from "firebase/storage";
 import { MdLocationPin } from "react-icons/md";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { collection, addDoc } from "firebase/firestore";
+import { query, where, getDocs } from "firebase/firestore";
 
 export default function Listing() {
   const params = useParams();
@@ -18,6 +19,7 @@ export default function Listing() {
   const [listingItem, setListingItem] = useState(null);
   const [school, setSchool] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasCommitted, setHasCommitted] = useState(false);
 
   useEffect(() => {
     const auth = getAuth();
@@ -26,7 +28,25 @@ export default function Listing() {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         if (userSnap.exists()) {
-          setUserData(userSnap.data());
+          const newUserData = {
+            ...userSnap.data(),
+            uid: user.uid,
+          };
+          setUserData(newUserData);
+
+          // Check commitment after setting user data
+          const checkCommitment = async () => {
+            const q = query(
+              collection(db, "matches"),
+              where("id_articulo", "==", params.listingItemId),
+              where("id_donante", "==", user.uid)
+            );
+
+            const querySnapshot = await getDocs(q);
+            setHasCommitted(!querySnapshot.empty);
+          };
+
+          checkCommitment();
         } else {
           console.error("No user data available");
         }
@@ -36,7 +56,7 @@ export default function Listing() {
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [navigate, params.listingItemId]);
 
   useEffect(() => {
     const fetchListingData = async () => {
@@ -88,6 +108,35 @@ export default function Listing() {
 
     fetchListingData();
   }, [params.listingId, params.listingItemId]);
+
+  const handleCommitment = async () => {
+    try {
+      /* 
+      const listingDocRef = doc(db, "pedidos", params.listingId);
+      await updateDoc(listingDocRef, {
+        estado: "pendiente",
+      }); 
+      */
+
+      const matchData = {
+        id_pedido: params.listingId,
+        id_articulo: params.listingItemId,
+        id_establecimiento: listing.id_escuela,
+        id_institucion: listing.id_instituto,
+        id_donante: userData.uid,
+        id_representante: listing.id_usuario,
+        fecha_creacion: new Date(),
+        estado: "match_donante",
+      };
+
+      await addDoc(collection(db, "matches"), matchData);
+
+      toast.success("Commitment registered successfully!");
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      toast.error("Failed to register commitment.");
+    }
+  };
 
   if (loading) {
     return <Spinner />;
@@ -158,14 +207,22 @@ export default function Listing() {
         </div>
       </div>
       <div className="flex items-center justify-center">
-        {userData.role === "donor" ? (
-          <button className="m-4 rounded-lg bg-green-700 p-2 font-semibold text-white hover:bg-green-900">
+        {userData.role === "donor" && !hasCommitted ? (
+          <button
+            onClick={handleCommitment}
+            className="m-4 rounded-lg bg-green-700 p-2 font-semibold text-white hover:bg-green-900"
+          >
             Quiero comprometerme a ayudar con este pedido 🤝
           </button>
         ) : (
+          "Se ha comprometido con este articulo."
+        )}
+        {userData.role === "schoolRep" ? (
           <button className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900">
-            Marcar como entregado 📦
+            Marcar como entregado 🚚
           </button>
+        ) : (
+          ""
         )}
       </div>
     </main>
