@@ -24,6 +24,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
+import { set } from "lodash";
 
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
@@ -92,6 +93,7 @@ export default function Home() {
   const [userSchools, setUserSchools] = useState([]);
   const [loading, setLoading] = useState(true);
   const [distances, setDistances] = useState({});
+  const [matches, setMatches] = useState([]);
 
   useEffect(() => {
     const auth = getAuth();
@@ -103,14 +105,16 @@ export default function Home() {
           setUserData(userSnap.data());
           if (userSnap.data().role === "schoolRep") {
             await fetchUserSchools(user.uid);
+            await fetchMatches(user.uid);
+            setLoading(false);
           } else if (userSnap.data().role === "donor") {
             await fetchSchools();
             await fetchListings();
+            setLoading(false);
           }
         } else {
           console.error("No user data available");
         }
-        setLoading(false);
       } else {
         navigate("/sign-in");
       }
@@ -147,7 +151,6 @@ export default function Home() {
       }
 
       setDistances(newDistances);
-      console.log(newDistances);
     };
 
     fetchDistances();
@@ -188,6 +191,27 @@ export default function Home() {
         })
       );
       setUserSchools(userSchools);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const fetchMatches = async (uid) => {
+    try {
+      const q = query(
+        collection(db, "matches"),
+        where("estado", "==", "match_donante", "&&", "id_usuario", "==", uid),
+        orderBy("fecha_creacion", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const matches = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const match = { id: doc.id, data: doc.data() };
+          return match;
+        })
+      );
+      setMatches(matches);
+      console.log(matches);
     } catch (error) {
       toast.error(error.message);
     }

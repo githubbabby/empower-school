@@ -214,16 +214,16 @@ export default function Listing() {
           >
             Quiero comprometerme a ayudar con este pedido 🤝
           </button>
-        ) : (
+        ) : userData.role === "donor" && hasCommitted ? (
           "Se ha comprometido con este articulo."
-        )}
-        {userData.role === "schoolRep" ? (
+        ) : null}
+
+        {userData.role === "schoolRep" &&
+        listing.id_usuario === userData.uid ? (
           <button className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900">
             Marcar como entregado 🚚
           </button>
-        ) : (
-          ""
-        )}
+        ) : null}
       </div>
     </main>
   );
