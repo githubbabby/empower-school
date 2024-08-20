@@ -131,7 +131,8 @@ export default function Listing() {
 
       await addDoc(collection(db, "matches"), matchData);
 
-      toast.success("Commitment registered successfully!");
+      toast.success("Compromiso registrado!");
+      setHasCommitted(true);
     } catch (error) {
       console.error("Error updating document: ", error);
       toast.error("Failed to register commitment.");

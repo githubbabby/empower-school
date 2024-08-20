@@ -14,11 +14,20 @@ export default function ListingCard({ id, listingItem, listingId, listing }) {
     if (!creationDate) return null;
     const now = dayjs();
     const monthsDiff = now.diff(creationDate, "months");
-    const daysDiff = now.diff(creationDate.add(monthsDiff, "months"), "days");
+    let daysDiff = now.diff(creationDate.add(monthsDiff, "months"), "days");
 
-    return `Hace ${daysDiff} día${
-      daysDiff === 1 ? "" : "s"
-    } y ${monthsDiff} mes${monthsDiff === 1 ? "" : "es"}`;
+    // Ensure daysDiff is never 0
+    if (daysDiff === 0) {
+      daysDiff = 1;
+    }
+
+    const daysText = `Hace ${daysDiff} día${daysDiff === 1 ? "" : "s"}`;
+    const monthsText =
+      monthsDiff > 0
+        ? ` y ${monthsDiff} mes${monthsDiff === 1 ? "" : "es"}`
+        : "";
+
+    return `${daysText}${monthsText}`;
   };
 
   const creationDate = dayjs(
