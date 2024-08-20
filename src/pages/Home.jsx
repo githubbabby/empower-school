@@ -99,6 +99,7 @@ export default function Home() {
   const [listingData, setListingData] = useState(null);
   const [listingItemData, setListingItemData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentMatchId, setCurrentMatchId] = useState(null);
 
   useEffect(() => {
     const auth = getAuth();
@@ -227,7 +228,6 @@ export default function Home() {
       const donorDoc = await getDoc(doc(db, "users", id_donante));
       if (donorDoc.exists()) {
         setDonorData(donorDoc.data());
-        setIsModalVisible(true);
       } else {
         console.error("No such donor!");
       }
@@ -240,7 +240,9 @@ export default function Home() {
     try {
       const listingDoc = await getDoc(doc(db, "pedidos", id_pedido));
       if (listingDoc.exists()) {
-        setListingData(listingDoc.data());
+        const listingData = listingDoc.data();
+        listingData.id = listingDoc.id; // Add the document ID to the data
+        setListingData(listingData);
       } else {
         console.error("No such listing!");
       }
@@ -255,7 +257,9 @@ export default function Home() {
         doc(db, "pedidos", id_pedido, "articulos", id_articulo)
       );
       if (listingItemDoc.exists()) {
-        setListingItemData(listingItemDoc.data());
+        const listingItemData = listingItemDoc.data();
+        listingItemData.id = listingItemDoc.id; // Add the document ID to the data
+        setListingItemData(listingItemData);
       } else {
         console.error("No such listing item!");
       }
@@ -264,11 +268,64 @@ export default function Home() {
     }
   };
 
-  const handleButtonClick = async (id_donante, id_pedido, id_articulo) => {
+  const handleButtonClick = async (
+    id_donante,
+    id_pedido,
+    id_articulo,
+    matchId
+  ) => {
     await fetchDonorData(id_donante);
     await fetchListingData(id_pedido);
     await fetchListingItemData(id_pedido, id_articulo);
+    setCurrentMatchId(matchId);
     setIsModalVisible(true);
+  };
+
+  const handleAccept = async () => {
+    if (currentMatchId) {
+      try {
+        const matchRef = doc(db, "matches", currentMatchId);
+        await updateDoc(matchRef, {
+          estado: "match_aceptado",
+        });
+
+        if (listingData.estado === "pendiente") {
+          const listingRef = doc(db, "pedidos", listingData.id);
+          await updateDoc(listingRef, {
+            estado: "en_proceso",
+          });
+        }
+        const listingItemRef = doc(
+          db,
+          "pedidos",
+          listingData.id,
+          "articulos",
+          listingItemData.id
+        );
+        await updateDoc(listingItemRef, {
+          estado: "en_proceso",
+        });
+
+        setIsModalVisible(false);
+        toast.success("La solicitud ha sido aceptada");
+      } catch (error) {
+        console.error("Error updating match document:", error);
+      }
+    }
+  };
+
+  const handleReject = async () => {
+    if (currentMatchId) {
+      try {
+        await updateDoc(doc(db, "matches", currentMatchId), {
+          estado: "match_rechazado",
+        });
+        setIsModalVisible(false);
+        toast.success("La solicitud ha sido rechazada");
+      } catch (error) {
+        console.error("Error updating match document:", error);
+      }
+    }
   };
 
   const fetchSchools = async () => {
@@ -356,8 +413,8 @@ export default function Home() {
     <div>
       {userData.role === "schoolRep" && (
         <div className="mx-auto mt-6 max-w-full px-3">
-          <div className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg">
-            {matches.map((match, index) => (
+          {matches.map((match, index) => (
+            <div className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg">
               <div key={index} className="mb-4 w-full">
                 <p className="text-md text-center font-semibold">
                   Tiene un nuevo donante interesado en ayudar a su escuela
@@ -369,7 +426,8 @@ export default function Home() {
                       handleButtonClick(
                         match.data.id_donante,
                         match.data.id_pedido,
-                        match.data.id_articulo
+                        match.data.id_articulo,
+                        match.id
                       )
                     }
                   >
@@ -377,83 +435,93 @@ export default function Home() {
                   </button>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
 
-            {isModalVisible && donorData && listingData && listingItemData && (
-              <div
-                id="default-modal"
-                className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
-              >
-                <div className="relative max-h-full w-full max-w-4xl p-4">
-                  <div className="relative rounded-lg bg-white shadow dark:bg-gray-700">
-                    <div className="flex items-center justify-between rounded-t border-b p-4 dark:border-gray-600">
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Datos del Donante y Pedido
-                      </h3>
-                      <button
-                        type="button"
-                        className="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
-                        onClick={() => setIsModalVisible(false)}
+          {isModalVisible && donorData && listingData && listingItemData && (
+            <div
+              id="default-modal"
+              className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
+            >
+              <div className="relative max-h-full w-full max-w-4xl p-4">
+                <div className="relative rounded-lg bg-white shadow dark:bg-gray-700">
+                  <div className="flex items-center justify-between rounded-t border-b p-4 dark:border-gray-600">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      Datos del Donante y Pedido
+                    </h3>
+                    <button
+                      type="button"
+                      className="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+                      onClick={() => setIsModalVisible(false)}
+                    >
+                      <svg
+                        className="h-3 w-3"
+                        aria-hidden="true"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 14 14"
                       >
-                        <svg
-                          className="h-3 w-3"
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 14 14"
-                        >
-                          <path
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                          />
-                        </svg>
-                        <span className="sr-only">Close modal</span>
-                      </button>
+                        <path
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+                        />
+                      </svg>
+                      <span className="sr-only">Close modal</span>
+                    </button>
+                  </div>
+                  <div className="flex space-x-4 p-4">
+                    <div className="w-1/2 space-y-4">
+                      <h4 className="text-lg font-semibold">
+                        Datos del Donante
+                      </h4>
+                      <p>Nombre: {donorData.nombre}</p>
+                      <p>Apellido: {donorData.apellido}</p>
+                      <p>C.I.: {donorData.ci}</p>
+                      <p>Email: {donorData.email}</p>
+                      <p>Telefono: {donorData.telefono}</p>
+                      <p>Direccion: {donorData.direccion}</p>
+                      <p>Ciudad: {donorData.distrito}</p>
+                      <p>Departamento: {donorData.departamento}</p>
                     </div>
-                    <div className="flex space-x-4 p-4">
-                      <div className="w-1/2 space-y-4">
-                        <h4 className="text-lg font-semibold">
-                          Datos del Donante
-                        </h4>
-                        <p>Nombre: {donorData.nombre}</p>
-                        <p>Apellido: {donorData.apellido}</p>
-                        <p>C.I.: {donorData.ci}</p>
-                        <p>Email: {donorData.email}</p>
-                        <p>Telefono: {donorData.telefono}</p>
-                        <p>Direccion: {donorData.direccion}</p>
-                        <p>Ciudad: {donorData.distrito}</p>
-                        <p>Departamento: {donorData.departamento}</p>
-                      </div>
-                      <div className="w-1/2 space-y-4">
-                        <h4 className="text-lg font-semibold">
-                          Datos del Pedido
-                        </h4>
-                        <p>Pedido: {listingData.nombre}</p>
-                        <p>Descripcion: {listingData.descripcion}</p>
-                        <h4 className="text-lg font-semibold">
-                          Datos del Articulo
-                        </h4>
-                        <p>Nombre: {listingItemData.nombre_articulo}</p>
-                        <p>Cantidad: {listingItemData.cantidad}</p>
-                      </div>
+                    <div className="w-1/2 space-y-4">
+                      <h4 className="text-lg font-semibold">
+                        Datos del Pedido
+                      </h4>
+                      <p>Nombre: {listingData.nombre}</p>
+                      <p>Descripcion: {listingData.descripcion}</p>
+                      <h4 className="text-lg font-semibold">
+                        Datos del Articulo
+                      </h4>
+                      <p>Nombre: {listingItemData.nombre_articulo}</p>
+                      <p>Descripcion: {listingItemData.ingrediente}</p>
+                      <p>Tipo: {listingItemData.categoria}</p>
+                      <p>Cantidad: {listingItemData.cantidad}</p>
                     </div>
-                    <div className="flex items-center rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
-                      <button
-                        type="button"
-                        className="rounded-lg bg-blue-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                        onClick={() => setIsModalVisible(false)}
-                      >
-                        Cerrar
-                      </button>
-                    </div>
+                  </div>
+                  <div className="flex items-center justify-between rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
+                    <button
+                      type="button"
+                      className="rounded-lg bg-red-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+                      onClick={handleReject}
+                    >
+                      Rechazar
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+                      onClick={handleAccept}
+                    >
+                      Aceptar
+                    </button>
                   </div>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
           <h2 className="mb-6 text-center text-2xl font-semibold">
             {userSchools.length === 0
               ? "No hay escuelas registradas"
