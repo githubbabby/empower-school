@@ -103,7 +103,8 @@ const DistanceFilter = ({ distance, setDistance }) => (
 );
 
 const MatchModal = ({
-  donorData,
+  userData,
+  targetUserData,
   listingData,
   listingItemData,
   onClose,
@@ -113,12 +114,17 @@ const MatchModal = ({
   <div
     id="default-modal"
     className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
+    style={{ zIndex: 1000 }}
   >
     <div className="relative max-h-full w-full max-w-4xl p-4">
       <div className="relative rounded-lg bg-white shadow dark:bg-gray-700">
         <div className="flex items-center justify-between rounded-t border-b p-4 dark:border-gray-600">
           <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            Datos del Donante y Pedido
+            Datos del{" "}
+            {targetUserData?.role === "donor"
+              ? "Donante"
+              : "Representante Escolar"}{" "}
+            y Pedido
           </h3>
           <button
             type="button"
@@ -145,15 +151,15 @@ const MatchModal = ({
         </div>
         <div className="flex space-x-4 p-4">
           <div className="w-1/2 space-y-4">
-            <h4 className="text-lg font-semibold">Datos del Donante</h4>
-            <p>Nombre: {donorData.nombre}</p>
-            <p>Apellido: {donorData.apellido}</p>
-            <p>C.I.: {donorData.ci}</p>
-            <p>Email: {donorData.email}</p>
-            <p>Telefono: {donorData.telefono}</p>
-            <p>Direccion: {donorData.direccion}</p>
-            <p>Ciudad: {donorData.distrito}</p>
-            <p>Departamento: {donorData.departamento}</p>
+            <h4 className="text-lg font-semibold">Datos del Usuario</h4>
+            <p>Nombre: {targetUserData.nombre}</p>
+            <p>Apellido: {targetUserData.apellido}</p>
+            <p>C.I.: {targetUserData.ci}</p>
+            <p>Email: {targetUserData.email}</p>
+            <p>Telefono: {targetUserData.telefono}</p>
+            <p>Direccion: {targetUserData.direccion}</p>
+            <p>Ciudad: {targetUserData.distrito}</p>
+            <p>Departamento: {targetUserData.departamento}</p>
           </div>
           <div className="w-1/2 space-y-4">
             <h4 className="text-lg font-semibold">Datos del Pedido</h4>
@@ -166,22 +172,24 @@ const MatchModal = ({
             <p>Cantidad: {listingItemData.cantidad}</p>
           </div>
         </div>
-        <div className="flex items-center justify-between rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
-          <button
-            type="button"
-            className="rounded-lg bg-red-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-            onClick={onReject}
-          >
-            Rechazar
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            onClick={onAccept}
-          >
-            Aceptar
-          </button>
-        </div>
+        {userData.role === "schoolRep" && (
+          <div className="flex items-center justify-between rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
+            <button
+              type="button"
+              className="rounded-lg bg-red-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+              onClick={onReject}
+            >
+              Rechazar
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              onClick={onAccept}
+            >
+              Aceptar
+            </button>
+          </div>
+        )}
       </div>
     </div>
   </div>
@@ -199,6 +207,7 @@ export default function Home() {
   const [distances, setDistances] = useState({});
   const [matches, setMatches] = useState([]);
   const [donorData, setDonorData] = useState(null);
+  const [schoolRepData, setSchoolRepData] = useState(null);
   const [listingData, setListingData] = useState(null);
   const [listingItemData, setListingItemData] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -214,11 +223,12 @@ export default function Home() {
           setUserData(userSnap.data());
           if (userSnap.data().role === "schoolRep") {
             await fetchUserSchools(user.uid);
-            await fetchMatches(user.uid);
+            await fetchSchoolRepMatches(user.uid);
             setLoading(false);
           } else if (userSnap.data().role === "donor") {
             await fetchSchools();
             await fetchListings();
+            await fetchDonorMatches(user.uid);
             setLoading(false);
           }
         } else {
@@ -305,11 +315,32 @@ export default function Home() {
     }
   };
 
-  const fetchMatches = async (uid) => {
+  const fetchSchoolRepMatches = async (uid) => {
     try {
       const q = query(
         collection(db, "matches"),
         where("estado", "==", "match_donante", "&&", "id_usuario", "==", uid),
+        orderBy("fecha_creacion", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const matches = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const match = { id: doc.id, data: doc.data() };
+          return match;
+        })
+      );
+      setMatches(matches);
+      console.log(matches);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const fetchDonorMatches = async (uid) => {
+    try {
+      const q = query(
+        collection(db, "matches"),
+        where("estado", "==", "match_aceptado", "&&", "id_usuario", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -336,6 +367,19 @@ export default function Home() {
       }
     } catch (error) {
       console.error("Error fetching donor data:", error);
+    }
+  };
+
+  const fetchSchoolRepData = async (id_representante) => {
+    try {
+      const schoolRepDoc = await getDoc(doc(db, "users", id_representante));
+      if (schoolRepDoc.exists()) {
+        setSchoolRepData(schoolRepDoc.data());
+      } else {
+        console.error("No such school rep!");
+      }
+    } catch (error) {
+      console.error("Error fetching school rep data:", error);
     }
   };
 
@@ -371,7 +415,7 @@ export default function Home() {
     }
   };
 
-  const handleButtonClick = async (
+  const handleButtonClickSchoolRep = async (
     id_donante,
     id_pedido,
     id_articulo,
@@ -379,6 +423,21 @@ export default function Home() {
   ) => {
     await Promise.all([
       fetchDonorData(id_donante),
+      fetchListingData(id_pedido),
+      fetchListingItemData(id_pedido, id_articulo),
+    ]);
+    setCurrentMatchId(matchId);
+    setIsModalVisible(true);
+  };
+
+  const handleButtonClickDonor = async (
+    id_representante,
+    id_pedido,
+    id_articulo,
+    matchId
+  ) => {
+    await Promise.all([
+      fetchSchoolRepData(id_representante),
       fetchListingData(id_pedido),
       fetchListingItemData(id_pedido, id_articulo),
     ]);
@@ -528,7 +587,7 @@ export default function Home() {
                   <button
                     className="text-md rounded bg-red-700 px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-red-900"
                     onClick={() =>
-                      handleButtonClick(
+                      handleButtonClickSchoolRep(
                         match.data.id_donante,
                         match.data.id_pedido,
                         match.data.id_articulo,
@@ -545,7 +604,8 @@ export default function Home() {
 
           {isModalVisible && donorData && listingData && listingItemData && (
             <MatchModal
-              donorData={donorData}
+              userData={userData}
+              targetUserData={donorData}
               listingData={listingData}
               listingItemData={listingItemData}
               onClose={() => setIsModalVisible(false)}
@@ -591,6 +651,48 @@ export default function Home() {
       {userData.role === "donor" && (
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
+            {matches.map((match, index) => (
+              <div
+                key={index}
+                className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
+              >
+                <div className="mb-4 w-full">
+                  <p className="text-md text-center font-semibold">
+                    Su solicitud ha sido aceptada por un representante escolar
+                  </p>
+                  <div className="flex justify-center">
+                    <button
+                      className="text-md rounded bg-red-700 px-4 py-2 text-white transition duration-300 ease-in-out hover:bg-red-900"
+                      onClick={() =>
+                        handleButtonClickDonor(
+                          match.data.id_representante,
+                          match.data.id_pedido,
+                          match.data.id_articulo,
+                          match.id
+                        )
+                      }
+                    >
+                      Ver detalles
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {isModalVisible &&
+              schoolRepData &&
+              listingData &&
+              listingItemData && (
+                <MatchModal
+                  userData={userData}
+                  targetUserData={schoolRepData}
+                  listingData={listingData}
+                  listingItemData={listingItemData}
+                  onClose={() => setIsModalVisible(false)}
+                  onAccept={handleAccept}
+                  onReject={handleReject}
+                />
+              )}
             <DistanceFilter distance={distance} setDistance={setDistance} />
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Pedidos de Escuelas
