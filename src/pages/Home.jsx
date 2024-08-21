@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase.config";
 import Spinner from "../components/Spinner";
+import { FaWhatsapp } from "react-icons/fa";
 import SchoolItem from "../components/SchoolItem";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -102,6 +103,16 @@ const DistanceFilter = ({ distance, setDistance }) => (
   </span>
 );
 
+// Helper function to format the phone number
+const formatPhoneNumber = (phoneNumber) => {
+  // Remove any spaces
+  let formattedNumber = phoneNumber.replace(/\s+/g, "");
+  // Remove leading zeros
+  formattedNumber = formattedNumber.replace(/^0+/, "");
+  // Add +595 at the start
+  return `+595${formattedNumber}`;
+};
+
 const MatchModal = ({
   userData,
   targetUserData,
@@ -156,7 +167,19 @@ const MatchModal = ({
             <p>Apellido: {targetUserData.apellido}</p>
             <p>C.I.: {targetUserData.ci}</p>
             <p>Email: {targetUserData.email}</p>
-            <p>Telefono: {targetUserData.telefono}</p>
+            <p>
+              Telefono: {targetUserData.telefono}
+              <a
+                href={`https://wa.me/${formatPhoneNumber(
+                  targetUserData.telefono
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="ml-2"
+              >
+                <FaWhatsapp className="inline-block" size={20} />
+              </a>
+            </p>
             <p>Direccion: {targetUserData.direccion}</p>
             <p>Ciudad: {targetUserData.distrito}</p>
             <p>Departamento: {targetUserData.departamento}</p>
