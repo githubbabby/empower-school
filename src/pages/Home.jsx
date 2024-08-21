@@ -84,6 +84,109 @@ const MapWithMarkers = ({ schools }) => {
   return null;
 };
 
+const DistanceFilter = ({ distance, setDistance }) => (
+  <span className="px-3 text-base font-semibold">
+    Quiero ver pedidos de escuelas en un radio de
+    <select
+      value={distance}
+      onChange={(e) => setDistance(Number(e.target.value))}
+      className="mb-4 inline-block"
+    >
+      <option value={10}>10</option>
+      <option value={25}>25</option>
+      <option value={50}>50</option>
+      <option value={100}>100</option>
+      <option value={450}>200</option>
+    </select>
+    kilometros
+  </span>
+);
+
+const MatchModal = ({
+  donorData,
+  listingData,
+  listingItemData,
+  onClose,
+  onAccept,
+  onReject,
+}) => (
+  <div
+    id="default-modal"
+    className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
+  >
+    <div className="relative max-h-full w-full max-w-4xl p-4">
+      <div className="relative rounded-lg bg-white shadow dark:bg-gray-700">
+        <div className="flex items-center justify-between rounded-t border-b p-4 dark:border-gray-600">
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+            Datos del Donante y Pedido
+          </h3>
+          <button
+            type="button"
+            className="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
+            onClick={onClose}
+          >
+            <svg
+              className="h-3 w-3"
+              aria-hidden="true"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 14 14"
+            >
+              <path
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
+              />
+            </svg>
+            <span className="sr-only">Close modal</span>
+          </button>
+        </div>
+        <div className="flex space-x-4 p-4">
+          <div className="w-1/2 space-y-4">
+            <h4 className="text-lg font-semibold">Datos del Donante</h4>
+            <p>Nombre: {donorData.nombre}</p>
+            <p>Apellido: {donorData.apellido}</p>
+            <p>C.I.: {donorData.ci}</p>
+            <p>Email: {donorData.email}</p>
+            <p>Telefono: {donorData.telefono}</p>
+            <p>Direccion: {donorData.direccion}</p>
+            <p>Ciudad: {donorData.distrito}</p>
+            <p>Departamento: {donorData.departamento}</p>
+          </div>
+          <div className="w-1/2 space-y-4">
+            <h4 className="text-lg font-semibold">Datos del Pedido</h4>
+            <p>Nombre: {listingData.nombre}</p>
+            <p>Descripcion: {listingData.descripcion}</p>
+            <h4 className="text-lg font-semibold">Datos del Articulo</h4>
+            <p>Nombre: {listingItemData.nombre_articulo}</p>
+            <p>Descripcion: {listingItemData.ingrediente}</p>
+            <p>Tipo: {listingItemData.categoria}</p>
+            <p>Cantidad: {listingItemData.cantidad}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
+          <button
+            type="button"
+            className="rounded-lg bg-red-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
+            onClick={onReject}
+          >
+            Rechazar
+          </button>
+          <button
+            type="button"
+            className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+            onClick={onAccept}
+          >
+            Aceptar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export default function Home() {
   const navigate = useNavigate();
   const [userData, setUserData] = useState(null);
@@ -274,9 +377,11 @@ export default function Home() {
     id_articulo,
     matchId
   ) => {
-    await fetchDonorData(id_donante);
-    await fetchListingData(id_pedido);
-    await fetchListingItemData(id_pedido, id_articulo);
+    await Promise.all([
+      fetchDonorData(id_donante),
+      fetchListingData(id_pedido),
+      fetchListingItemData(id_pedido, id_articulo),
+    ]);
     setCurrentMatchId(matchId);
     setIsModalVisible(true);
   };
@@ -439,87 +544,14 @@ export default function Home() {
           ))}
 
           {isModalVisible && donorData && listingData && listingItemData && (
-            <div
-              id="default-modal"
-              className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black bg-opacity-50"
-            >
-              <div className="relative max-h-full w-full max-w-4xl p-4">
-                <div className="relative rounded-lg bg-white shadow dark:bg-gray-700">
-                  <div className="flex items-center justify-between rounded-t border-b p-4 dark:border-gray-600">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      Datos del Donante y Pedido
-                    </h3>
-                    <button
-                      type="button"
-                      className="ms-auto inline-flex h-8 w-8 items-center justify-center rounded-lg bg-transparent text-sm text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-600 dark:hover:text-white"
-                      onClick={() => setIsModalVisible(false)}
-                    >
-                      <svg
-                        className="h-3 w-3"
-                        aria-hidden="true"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 14 14"
-                      >
-                        <path
-                          stroke="currentColor"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"
-                        />
-                      </svg>
-                      <span className="sr-only">Close modal</span>
-                    </button>
-                  </div>
-                  <div className="flex space-x-4 p-4">
-                    <div className="w-1/2 space-y-4">
-                      <h4 className="text-lg font-semibold">
-                        Datos del Donante
-                      </h4>
-                      <p>Nombre: {donorData.nombre}</p>
-                      <p>Apellido: {donorData.apellido}</p>
-                      <p>C.I.: {donorData.ci}</p>
-                      <p>Email: {donorData.email}</p>
-                      <p>Telefono: {donorData.telefono}</p>
-                      <p>Direccion: {donorData.direccion}</p>
-                      <p>Ciudad: {donorData.distrito}</p>
-                      <p>Departamento: {donorData.departamento}</p>
-                    </div>
-                    <div className="w-1/2 space-y-4">
-                      <h4 className="text-lg font-semibold">
-                        Datos del Pedido
-                      </h4>
-                      <p>Nombre: {listingData.nombre}</p>
-                      <p>Descripcion: {listingData.descripcion}</p>
-                      <h4 className="text-lg font-semibold">
-                        Datos del Articulo
-                      </h4>
-                      <p>Nombre: {listingItemData.nombre_articulo}</p>
-                      <p>Descripcion: {listingItemData.ingrediente}</p>
-                      <p>Tipo: {listingItemData.categoria}</p>
-                      <p>Cantidad: {listingItemData.cantidad}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between rounded-b border-t border-gray-200 p-4 dark:border-gray-600">
-                    <button
-                      type="button"
-                      className="rounded-lg bg-red-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-red-800 focus:outline-none focus:ring-4 focus:ring-red-300 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-800"
-                      onClick={handleReject}
-                    >
-                      Rechazar
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg bg-green-700 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                      onClick={handleAccept}
-                    >
-                      Aceptar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <MatchModal
+              donorData={donorData}
+              listingData={listingData}
+              listingItemData={listingItemData}
+              onClose={() => setIsModalVisible(false)}
+              onAccept={handleAccept}
+              onReject={handleReject}
+            />
           )}
 
           <h2 className="mb-6 text-center text-2xl font-semibold">
@@ -559,21 +591,7 @@ export default function Home() {
       {userData.role === "donor" && (
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
-            <span className="px-3 text-base font-semibold">
-              Quiero ver pedidos de escuelas en un radio de
-              <select
-                value={distance}
-                onChange={(e) => setDistance(Number(e.target.value))}
-                className="mb-4 inline-block"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={450}>200</option>
-              </select>
-              kilometros
-            </span>
+            <DistanceFilter distance={distance} setDistance={setDistance} />
             <h2 className="mb-6 text-center text-2xl font-semibold">
               Pedidos de Escuelas
             </h2>
