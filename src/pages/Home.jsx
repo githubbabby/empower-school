@@ -25,6 +25,7 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
+import ListingsList from "../components/ListingsList";
 
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
@@ -226,6 +227,7 @@ export default function Home() {
   const [listings, setListings] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
+  const [userListings, setUserListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [distances, setDistances] = useState({});
   const [matches, setMatches] = useState([]);
@@ -246,6 +248,7 @@ export default function Home() {
           setUserData(userSnap.data());
           if (userSnap.data().role === "schoolRep") {
             await fetchUserSchools(user.uid);
+            await fetchUserListings(user.uid);
             await fetchSchoolRepMatches(user.uid);
             setLoading(false);
           } else if (userSnap.data().role === "donor") {
@@ -338,11 +341,43 @@ export default function Home() {
     }
   };
 
+  const fetchUserListings = async (uid) => {
+    try {
+      const q = query(
+        collection(db, "pedidos"),
+        where("id_usuario", "==", uid),
+        where("estado", "in", ["pendiente", "en_proceso"]),
+        orderBy("estado"),
+        orderBy("fecha_creacion", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const userListings = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const listing = { id: doc.id, data: doc.data(), listingItems: [] };
+          const listingItemsSnapshot = await getDocs(
+            collection(doc.ref, "articulos")
+          );
+          listingItemsSnapshot.forEach((listingItemDoc) => {
+            listing.listingItems.push({
+              id: listingItemDoc.id,
+              data: listingItemDoc.data(),
+            });
+          });
+          return listing;
+        })
+      );
+      setUserListings(userListings);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
   const fetchSchoolRepMatches = async (uid) => {
     try {
       const q = query(
         collection(db, "matches"),
-        where("estado", "==", "match_donante", "&&", "id_usuario", "==", uid),
+        where("estado", "==", "match_donante"),
+        where("id_usuario", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -363,7 +398,8 @@ export default function Home() {
     try {
       const q = query(
         collection(db, "matches"),
-        where("estado", "==", "match_aceptado", "&&", "id_usuario", "==", uid),
+        where("estado", "==", "match_aceptado"),
+        where("id_usuario", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -635,6 +671,14 @@ export default function Home() {
               onAccept={handleAccept}
               onReject={handleReject}
             />
+          )}
+          <h2 className="mb-6 text-center text-2xl font-semibold">
+            {userListings.length === 0
+              ? "No hay pedidos registrados"
+              : "Mis Pedidos"}
+          </h2>
+          {userListings.length > 0 && (
+            <ListingsList listings={userListings} userRole={userData.role} />
           )}
 
           <h2 className="mb-6 text-center text-2xl font-semibold">

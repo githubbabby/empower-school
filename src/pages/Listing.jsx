@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { db } from "../firebase.config";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import Spinner from "../components/Spinner";
 import { MdLocationPin } from "react-icons/md";
@@ -18,6 +18,7 @@ export default function Listing() {
   const [listing, setListing] = useState(null);
   const [listingItem, setListingItem] = useState(null);
   const [school, setSchool] = useState(null);
+  const [matchLmao, setMatchLmao] = useState(null);
   const [loading, setLoading] = useState(true);
   const [hasCommitted, setHasCommitted] = useState(false);
 
@@ -47,6 +48,18 @@ export default function Listing() {
           };
 
           checkCommitment();
+
+          // Check match
+          const q = query(
+            collection(db, "matches"),
+            where("id_articulo", "==", params.listingItemId),
+            where("estado", "==", "match_aceptado")
+          );
+
+          const querySnapshot = await getDocs(q);
+          querySnapshot.forEach((doc) => {
+            setMatchLmao({ id: doc.id, ...doc.data() });
+          });
         } else {
           console.error("No user data available");
         }
@@ -65,7 +78,7 @@ export default function Listing() {
         const listingSnap = await getDoc(docRef);
 
         if (listingSnap.exists()) {
-          setListing(listingSnap.data());
+          setListing({ id: listingSnap.id, ...listingSnap.data() });
           const schoolDocRef = doc(
             db,
             "escuelas",
@@ -93,7 +106,7 @@ export default function Listing() {
         const listingItemSnap = await getDoc(docRefItem);
 
         if (listingItemSnap.exists()) {
-          setListingItem(listingItemSnap.data());
+          setListingItem({ id: listingItemSnap.id, ...listingItemSnap.data() });
         } else {
           console.log("No such document!");
           toast.error("Error al obtener el pedido");
@@ -111,13 +124,6 @@ export default function Listing() {
 
   const handleCommitment = async () => {
     try {
-      /* 
-      const listingDocRef = doc(db, "pedidos", params.listingId);
-      await updateDoc(listingDocRef, {
-        estado: "pendiente",
-      }); 
-      */
-
       const matchData = {
         id_pedido: params.listingId,
         id_articulo: params.listingItemId,
@@ -139,9 +145,51 @@ export default function Listing() {
     }
   };
 
+  const handleDonation = async (matchId, listingId, listingItemId) => {
+    try {
+      // Update match document
+      const matchDocRef = doc(db, "matches", matchId);
+      await updateDoc(matchDocRef, {
+        estado: "concretado",
+        fecha_concretado: new Date(),
+      });
+
+      // Update listing item document
+      const listingItemDocRef = doc(
+        db,
+        "pedidos",
+        listingId,
+        "articulos",
+        listingItemId
+      );
+      await updateDoc(listingItemDocRef, {
+        estado: "concretado",
+      });
+
+      // Add new document to donations collection
+      const donationData = {
+        id_pedido: listingId,
+        id_articulo: listingItemId,
+        id_establecimiento: listing.id_escuela,
+        id_institucion: listing.id_instituto,
+        id_donante: userData.uid,
+        fecha_donacion: new Date(),
+      };
+      await addDoc(collection(db, "donaciones"), donationData);
+
+      toast.success("Donación registrada!");
+      navigate("/");
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      toast.error("Failed to register donation.");
+    }
+  };
+
   if (loading) {
     return <Spinner />;
   }
+
+  console.log("Match", matchLmao);
 
   return (
     <main>
@@ -221,9 +269,20 @@ export default function Listing() {
 
         {userData.role === "schoolRep" &&
         listing.id_usuario === userData.uid ? (
-          <button className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900">
-            Marcar como entregado 🚚
-          </button>
+          listingItem.estado === "en_proceso" ? (
+            <button
+              className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900"
+              onClick={() =>
+                handleDonation(matchLmao.id, listing.id, listingItem.id)
+              }
+            >
+              Marcar como entregado 🚚
+            </button>
+          ) : listingItem.estado === "concretado" ? (
+            <p className="m-4 font-semibold text-green-700">
+              Este articulo ya fue donado
+            </p>
+          ) : null
         ) : null}
       </div>
     </main>
