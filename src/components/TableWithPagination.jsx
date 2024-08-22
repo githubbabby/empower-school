@@ -33,8 +33,8 @@ export default function TableWithPagination({ listings }) {
 
     if (sortConfig.key) {
       sortedListings.sort((a, b) => {
-        const aValue = a.data[sortConfig.key].toLowerCase();
-        const bValue = b.data[sortConfig.key].toLowerCase();
+        const aValue = a.data[sortConfig.key]?.toLowerCase() || "";
+        const bValue = b.data[sortConfig.key]?.toLowerCase() || "";
         if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
@@ -79,6 +79,37 @@ export default function TableWithPagination({ listings }) {
       return sortConfig.direction === "asc" ? <FaSortUp /> : <FaSortDown />;
     }
     return <FaSort />;
+  };
+
+  const convertToCSV = (data) => {
+    const csvRows = [];
+    const headers = Object.keys(data[0]);
+    csvRows.push(headers.join(","));
+
+    for (const row of data) {
+      const values = headers.map((header) => {
+        const value =
+          row[header] !== null && row[header] !== undefined
+            ? row[header]
+            : "(vacio)";
+        const escaped = ("" + value).replace(/"/g, '\\"');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(","));
+    }
+
+    return csvRows.join("\n");
+  };
+
+  const handleExportCSV = () => {
+    const csv = convertToCSV(sortedAndFilteredRows.map((row) => row.data));
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "table_data.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -180,6 +211,16 @@ export default function TableWithPagination({ listings }) {
                     spacer: "hidden",
                   }}
                 />
+              </td>
+            </tr>
+            <tr>
+              <td colSpan={3} className="p-4 text-right">
+                <button
+                  onClick={handleExportCSV}
+                  className="rounded bg-green-700 px-4 py-2 text-white"
+                >
+                  Exportar a CSV
+                </button>
               </td>
             </tr>
           </tfoot>
