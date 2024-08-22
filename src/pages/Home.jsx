@@ -26,6 +26,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
 import ListingsList from "../components/ListingsList";
+import TableWithPagination from "../components/TableWithPagination";
 
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
@@ -718,6 +719,10 @@ export default function Home() {
       {userData.role === "donor" && (
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
+            <h2 className="mb-6 text-center text-2xl font-semibold">
+              Reportes
+            </h2>
+            <TableWithPagination listings={listings} />
             {matches.map((match, index) => (
               <div
                 key={index}

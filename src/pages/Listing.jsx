@@ -189,8 +189,6 @@ export default function Listing() {
     return <Spinner />;
   }
 
-  console.log("Match", matchLmao);
-
   return (
     <main>
       <div className="m-4 flex max-w-6xl flex-col rounded-xl bg-white p-4 shadow-lg md:flex-row lg:mx-auto lg:space-x-5">
@@ -269,7 +267,7 @@ export default function Listing() {
 
         {userData.role === "schoolRep" &&
         listing.id_usuario === userData.uid ? (
-          listingItem.estado === "en_proceso" ? (
+          listingItem.estado === "en_proceso" && matchLmao ? (
             <button
               className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900"
               onClick={() =>
