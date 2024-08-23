@@ -32,18 +32,25 @@ export default function TableWithPagination({ listings, donations }) {
   };
 
   const sortedAndFilteredRows = useMemo(() => {
-    const data = tabIndex === 0 ? listings : donations;
-    let items = [];
+    // Separate `concretado` items from listings
+    const concretadoItems = [];
+    const nonConcretadoItems = [];
 
-    if (tabIndex === 0) {
-      data.forEach((listing) => {
-        if (listing.listingItems) {
-          items = items.concat(listing.listingItems);
-        }
-      });
-    } else {
-      items = data;
-    }
+    listings.forEach((listing) => {
+      if (listing.listingItems) {
+        listing.listingItems.forEach((item) => {
+          if (item.data.estado === "concretado") {
+            concretadoItems.push(item);
+          } else {
+            nonConcretadoItems.push(item);
+          }
+        });
+      }
+    });
+
+    const data = tabIndex === 0 ? nonConcretadoItems : concretadoItems;
+
+    let items = data;
 
     if (sortConfig.key) {
       items.sort((a, b) => {
@@ -114,8 +121,13 @@ export default function TableWithPagination({ listings, donations }) {
   };
 
   const convertToCSV = (data) => {
+    if (data.length === 0) return "";
+
+    // Filter out columns that start with "id_"
+    const headers = Object.keys(data[0]).filter(
+      (header) => !header.startsWith("id_")
+    );
     const csvRows = [];
-    const headers = Object.keys(data[0]);
     csvRows.push(headers.join(","));
 
     for (const row of data) {
@@ -152,8 +164,15 @@ export default function TableWithPagination({ listings, donations }) {
 
   return (
     <ThemeProvider theme={themeWithLocale}>
-      <div className="max-w-full overflow-x-auto">
-        <Tabs value={tabIndex} onChange={handleTabChange}>
+      <div
+        className="max-w-full overflow-x-auto"
+        style={{ backgroundColor: "white " }}
+      >
+        <Tabs
+          value={tabIndex}
+          onChange={handleTabChange}
+          style={{ backgroundColor: "white " }}
+        >
           <Tab label="PEDIDOS" />
           <Tab label="DONACIONES" />
         </Tabs>
@@ -173,7 +192,6 @@ export default function TableWithPagination({ listings, donations }) {
             <option value="">Todos los Estados</option>
             <option value="pendiente">Pendiente</option>
             <option value="en_proceso">En Proceso</option>
-            <option value="concretado">Concretado</option>
           </select>
         </div>
         <table className="min-w-full border-collapse bg-white">
