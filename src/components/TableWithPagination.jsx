@@ -15,6 +15,8 @@ export default function TableWithPagination({ listings, donations }) {
   });
   const [filterText, setFilterText] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterIngredient, setFilterIngredient] = useState("");
   const [tabIndex, setTabIndex] = useState(0);
 
   const theme = useTheme();
@@ -74,12 +76,37 @@ export default function TableWithPagination({ listings, donations }) {
       );
     }
 
-    if (filterStatus) {
+    if (filterCategory) {
+      items = items.filter((item) =>
+        (item.data.categoria || "")
+          .toLowerCase()
+          .includes(filterCategory.toLowerCase())
+      );
+    }
+
+    if (filterIngredient) {
+      items = items.filter((item) =>
+        (item.data.ingrediente || "")
+          .toLowerCase()
+          .includes(filterIngredient.toLowerCase())
+      );
+    }
+
+    if (tabIndex === 0 && filterStatus) {
       items = items.filter((item) => item.data.estado === filterStatus);
     }
 
     return items;
-  }, [listings, donations, sortConfig, filterText, filterStatus, tabIndex]);
+  }, [
+    listings,
+    donations,
+    sortConfig,
+    filterText,
+    filterStatus,
+    filterCategory,
+    filterIngredient,
+    tabIndex,
+  ]);
 
   const emptyRows =
     page > 0
@@ -176,7 +203,7 @@ export default function TableWithPagination({ listings, donations }) {
           <Tab label="PEDIDOS" />
           <Tab label="DONACIONES" />
         </Tabs>
-        <div className="flex justify-between p-4">
+        <div className="flex flex-wrap gap-4 p-4">
           <input
             type="text"
             placeholder="Filtrar por Nombre"
@@ -184,15 +211,31 @@ export default function TableWithPagination({ listings, donations }) {
             onChange={(e) => setFilterText(e.target.value)}
             className="rounded border p-2 text-sm"
           />
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+          <input
+            type="text"
+            placeholder="Filtrar por Tipo"
+            value={filterIngredient}
+            onChange={(e) => setFilterIngredient(e.target.value)}
             className="rounded border p-2 text-sm"
-          >
-            <option value="">Todos los Estados</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="en_proceso">En Proceso</option>
-          </select>
+          />
+          <input
+            type="text"
+            placeholder="Filtrar por Categoría"
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="rounded border p-2 text-sm"
+          />
+          {tabIndex === 0 && (
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="rounded border p-2 text-sm"
+            >
+              <option value="">Todos los Estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="en_proceso">En Proceso</option>
+            </select>
+          )}
         </div>
         <table className="min-w-full border-collapse bg-white">
           <thead>
@@ -205,15 +248,15 @@ export default function TableWithPagination({ listings, donations }) {
               </th>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
-                onClick={() => handleSort("categoria")}
+                onClick={() => handleSort("ingrediente")}
               >
-                Categoría {getSortIcon("categoria")}
+                Tipo {getSortIcon("ingrediente")}
               </th>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
-                onClick={() => handleSort("ingrediente")}
+                onClick={() => handleSort("categoria")}
               >
-                Ingrediente {getSortIcon("ingrediente")}
+                Categoría {getSortIcon("categoria")}
               </th>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
@@ -242,10 +285,10 @@ export default function TableWithPagination({ listings, donations }) {
                   {item.data.nombre_articulo}
                 </td>
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
-                  {item.data.categoria}
+                  {item.data.ingrediente || "N/A"}
                 </td>
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
-                  {item.data.ingrediente}
+                  {item.data.categoria || "N/A"}
                 </td>
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
                   {formatDate(item.data.fecha_creacion)}
