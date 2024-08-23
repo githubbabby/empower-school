@@ -226,6 +226,8 @@ export default function Home() {
   const [schools, setSchools] = useState([]);
   const [distance, setDistance] = useState(10);
   const [listings, setListings] = useState([]);
+  const [allListings, setAllListings] = useState([]);
+  const [donations, setDonations] = useState([]);
   const [filteredListings, setFilteredListings] = useState([]);
   const [userSchools, setUserSchools] = useState([]);
   const [userListings, setUserListings] = useState([]);
@@ -254,8 +256,12 @@ export default function Home() {
             setLoading(false);
           } else if (userSnap.data().role === "donor") {
             await fetchSchools();
-            await fetchListings();
+            await fetchPendingListings();
             await fetchDonorMatches(user.uid);
+            setLoading(false);
+          } else if (userSnap.data().role === "mec") {
+            await fetchAllListings(user.uid);
+            await fetchDonations(user.uid);
             setLoading(false);
           }
         } else {
@@ -580,7 +586,7 @@ export default function Home() {
     }
   };
 
-  const fetchListings = async () => {
+  const fetchPendingListings = async () => {
     try {
       const q = query(
         collection(db, "pedidos"),
@@ -604,6 +610,54 @@ export default function Home() {
         })
       );
       setListings(listings);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const fetchAllListings = async (uid) => {
+    try {
+      const q = query(
+        collection(db, "pedidos"),
+        orderBy("fecha_creacion", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const listings = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const listing = { id: doc.id, data: doc.data(), listingItems: [] };
+          const listingItemsSnapshot = await getDocs(
+            collection(doc.ref, "articulos")
+          );
+          listingItemsSnapshot.forEach((listingItemDoc) => {
+            listing.listingItems.push({
+              id: listingItemDoc.id,
+              data: listingItemDoc.data(),
+            });
+          });
+          return listing;
+        })
+      );
+      setAllListings(listings);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const fetchDonations = async (uid) => {
+    try {
+      const q = query(
+        collection(db, "matches"),
+        where("estado", "==", "concretado"),
+        orderBy("fecha_concretado", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      const donations = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+          const donation = { id: doc.id, data: doc.data() };
+          return donation;
+        })
+      );
+      setDonations(donations);
     } catch (error) {
       toast.error(error.message);
     }
@@ -719,10 +773,6 @@ export default function Home() {
       {userData.role === "donor" && (
         <>
           <div className="mx-auto mt-6 max-w-full px-3">
-            <h2 className="mb-6 text-center text-2xl font-semibold">
-              Reportes
-            </h2>
-            <TableWithPagination listings={listings} />
             {matches.map((match, index) => (
               <div
                 key={index}
@@ -800,6 +850,13 @@ export default function Home() {
             </MapContainer>
           </div>
         </>
+      )}
+
+      {userData.role === "mec" && (
+        <div className="mx-auto mt-6 max-w-full px-3">
+          <h2 className="mb-6 text-center text-2xl font-semibold">Reportes</h2>
+          <TableWithPagination listings={allListings} donations={donations} />
+        </div>
       )}
     </div>
   );

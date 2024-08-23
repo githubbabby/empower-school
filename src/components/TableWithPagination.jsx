@@ -3,16 +3,19 @@ import TablePagination from "@mui/material/TablePagination";
 import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import { createTheme, ThemeProvider, useTheme } from "@mui/material/styles";
 import * as locales from "@mui/material/locale";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
 
-export default function TableWithPagination({ listings }) {
+export default function TableWithPagination({ listings, donations }) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [sortConfig, setSortConfig] = useState({
-    key: "nombre",
+    key: "nombre_articulo",
     direction: "asc",
   });
   const [filterText, setFilterText] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+  const [tabIndex, setTabIndex] = useState(0);
 
   const theme = useTheme();
   const themeWithLocale = useMemo(
@@ -29,12 +32,23 @@ export default function TableWithPagination({ listings }) {
   };
 
   const sortedAndFilteredRows = useMemo(() => {
-    let sortedListings = [...listings];
+    const data = tabIndex === 0 ? listings : donations;
+    let items = [];
+
+    if (tabIndex === 0) {
+      data.forEach((listing) => {
+        if (listing.listingItems) {
+          items = items.concat(listing.listingItems);
+        }
+      });
+    } else {
+      items = data;
+    }
 
     if (sortConfig.key) {
-      sortedListings.sort((a, b) => {
-        const aValue = a.data[sortConfig.key]?.toLowerCase() || "";
-        const bValue = b.data[sortConfig.key]?.toLowerCase() || "";
+      items.sort((a, b) => {
+        const aValue = String(a.data[sortConfig.key] || "").toLowerCase();
+        const bValue = String(b.data[sortConfig.key] || "").toLowerCase();
         if (aValue < bValue) {
           return sortConfig.direction === "asc" ? -1 : 1;
         }
@@ -46,19 +60,19 @@ export default function TableWithPagination({ listings }) {
     }
 
     if (filterText) {
-      sortedListings = sortedListings.filter((listing) =>
-        listing.data.nombre.toLowerCase().includes(filterText.toLowerCase())
+      items = items.filter((item) =>
+        item.data.nombre_articulo
+          .toLowerCase()
+          .includes(filterText.toLowerCase())
       );
     }
 
     if (filterStatus) {
-      sortedListings = sortedListings.filter(
-        (listing) => listing.data.estado === filterStatus
-      );
+      items = items.filter((item) => item.data.estado === filterStatus);
     }
 
-    return sortedListings;
-  }, [listings, sortConfig, filterText, filterStatus]);
+    return items;
+  }, [listings, donations, sortConfig, filterText, filterStatus, tabIndex]);
 
   const emptyRows =
     page > 0
@@ -81,6 +95,24 @@ export default function TableWithPagination({ listings }) {
     return <FaSort />;
   };
 
+  const formatDate = (timestamp) => {
+    if (!timestamp || typeof timestamp.seconds !== "number") return "N/A";
+
+    // Convert Firestore timestamp to milliseconds
+    const date = new Date(
+      timestamp.seconds * 1000 + timestamp.nanoseconds / 1e6
+    );
+
+    // Format the date to DD/MM/YYYY in 'es-PY' locale
+    return isNaN(date.getTime())
+      ? "N/A"
+      : date.toLocaleDateString("es-PY", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+  };
+
   const convertToCSV = (data) => {
     const csvRows = [];
     const headers = Object.keys(data[0]);
@@ -88,10 +120,11 @@ export default function TableWithPagination({ listings }) {
 
     for (const row of data) {
       const values = headers.map((header) => {
-        const value =
-          row[header] !== null && row[header] !== undefined
-            ? row[header]
-            : "(vacio)";
+        let value = row[header];
+        if (header.startsWith("fecha") && value) {
+          value = formatDate(value);
+        }
+        value = value !== null && value !== undefined ? value : "(vacio)";
         const escaped = ("" + value).replace(/"/g, '\\"');
         return `"${escaped}"`;
       });
@@ -112,9 +145,18 @@ export default function TableWithPagination({ listings }) {
     document.body.removeChild(link);
   };
 
+  const handleTabChange = (event, newValue) => {
+    setTabIndex(newValue);
+    setPage(0); // Reset pagination when switching tabs
+  };
+
   return (
     <ThemeProvider theme={themeWithLocale}>
       <div className="max-w-full overflow-x-auto">
+        <Tabs value={tabIndex} onChange={handleTabChange}>
+          <Tab label="PEDIDOS" />
+          <Tab label="DONACIONES" />
+        </Tabs>
         <div className="flex justify-between p-4">
           <input
             type="text"
@@ -139,15 +181,27 @@ export default function TableWithPagination({ listings }) {
             <tr>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
-                onClick={() => handleSort("nombre")}
+                onClick={() => handleSort("nombre_articulo")}
               >
-                Nombre {getSortIcon("nombre")}
+                Nombre {getSortIcon("nombre_articulo")}
               </th>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
-                onClick={() => handleSort("descripcion")}
+                onClick={() => handleSort("categoria")}
               >
-                Descripción {getSortIcon("descripcion")}
+                Categoría {getSortIcon("categoria")}
+              </th>
+              <th
+                className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                onClick={() => handleSort("ingrediente")}
+              >
+                Ingrediente {getSortIcon("ingrediente")}
+              </th>
+              <th
+                className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
+                onClick={() => handleSort("fecha_creacion")}
+              >
+                Fecha Creación {getSortIcon("fecha_creacion")}
               </th>
               <th
                 className="cursor-pointer border-b px-6 py-4 text-left text-sm font-semibold text-gray-900"
@@ -164,28 +218,34 @@ export default function TableWithPagination({ listings }) {
                   page * rowsPerPage + rowsPerPage
                 )
               : sortedAndFilteredRows
-            ).map((listing) => (
-              <tr key={listing.id} className="even:bg-gray-100">
+            ).map((item) => (
+              <tr key={item.id} className="even:bg-gray-100">
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
-                  {listing.data.nombre}
+                  {item.data.nombre_articulo}
                 </td>
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
-                  {listing.data.descripcion}
+                  {item.data.categoria}
                 </td>
                 <td className="border-b px-6 py-4 text-sm text-gray-700">
-                  {listing.data.estado}
+                  {item.data.ingrediente}
+                </td>
+                <td className="border-b px-6 py-4 text-sm text-gray-700">
+                  {formatDate(item.data.fecha_creacion)}
+                </td>
+                <td className="border-b px-6 py-4 text-sm text-gray-700">
+                  {item.data.estado}
                 </td>
               </tr>
             ))}
             {emptyRows > 0 && (
               <tr style={{ height: 41 * emptyRows }}>
-                <td colSpan={3} className="border-b px-6 py-4" />
+                <td colSpan={5} className="border-b px-6 py-4" />
               </tr>
             )}
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={3}>
+              <td colSpan={5}>
                 <TablePagination
                   component="div"
                   count={sortedAndFilteredRows.length}
@@ -214,7 +274,7 @@ export default function TableWithPagination({ listings }) {
               </td>
             </tr>
             <tr>
-              <td colSpan={3} className="p-4 text-right">
+              <td colSpan={5} className="p-4 text-right">
                 <button
                   onClick={handleExportCSV}
                   className="rounded bg-green-700 px-4 py-2 text-white"
