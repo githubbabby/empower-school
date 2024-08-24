@@ -31,6 +31,16 @@ const ListingsList = ({ listings, userRole }) => {
                       >
                         {item.data.nombre_articulo}
                       </Link>
+                      {item.data.estado === "concretado" && (
+                        <span className="ml-2 rounded bg-green-200 px-2 py-1 text-xs font-semibold text-green-700">
+                          Donado
+                        </span>
+                      )}
+                      {item.data.estado === "en_proceso" && (
+                        <span className="ml-2 rounded bg-yellow-200 px-2 py-1 text-xs font-semibold text-yellow-700">
+                          En proceso
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span className="text-gray-700">Cantidad:</span>{" "}

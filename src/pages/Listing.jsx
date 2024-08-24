@@ -40,7 +40,8 @@ export default function Listing() {
             const q = query(
               collection(db, "matches"),
               where("id_articulo", "==", params.listingItemId),
-              where("id_donante", "==", user.uid)
+              where("id_donante", "==", user.uid),
+              where("estado", "in", ["match_donante", "match_aceptado"])
             );
 
             const querySnapshot = await getDocs(q);
@@ -178,10 +179,39 @@ export default function Listing() {
       await addDoc(collection(db, "donaciones"), donationData);
 
       toast.success("Donación registrada!");
-      navigate("/");
     } catch (error) {
       console.error("Error updating document: ", error);
       toast.error("Failed to register donation.");
+    }
+  };
+
+  //Function to handle the cancellation of a by updating the match document and listingitem document
+  const handleCancellation = async (matchId, listingId, listingItemId) => {
+    try {
+      // Update match document
+      const matchDocRef = doc(db, "matches", matchId);
+      await updateDoc(matchDocRef, {
+        estado: "cancelado",
+        fecha_cancelado: new Date(),
+      });
+
+      // Update listing item document
+      const listingItemDocRef = doc(
+        db,
+        "pedidos",
+        listingId,
+        "articulos",
+        listingItemId
+      );
+      await updateDoc(listingItemDocRef, {
+        estado: "pendiente",
+      });
+
+      toast.success("Compromiso cancelado!");
+      setHasCommitted(false);
+    } catch (error) {
+      console.error("Error updating document: ", error);
+      toast.error("Failed to cancel commitment.");
     }
   };
 
@@ -268,14 +298,24 @@ export default function Listing() {
         {userData.role === "schoolRep" &&
         listing.id_usuario === userData.uid ? (
           listingItem.estado === "en_proceso" && matchLmao ? (
-            <button
-              className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900"
-              onClick={() =>
-                handleDonation(matchLmao.id, listing.id, listingItem.id)
-              }
-            >
-              Marcar como entregado 🚚
-            </button>
+            <>
+              <button
+                className="m-4 rounded-lg bg-pink-700 p-2 font-semibold text-white hover:bg-pink-900"
+                onClick={() =>
+                  handleDonation(matchLmao.id, listing.id, listingItem.id)
+                }
+              >
+                Marcar como entregado 🚚
+              </button>
+              <button
+                className="m-4 rounded-lg bg-purple-700 p-2 font-semibold text-white hover:bg-purple-900"
+                onClick={() =>
+                  handleCancellation(matchLmao.id, listing.id, listingItem.id)
+                }
+              >
+                Cancelar compromiso 🚫
+              </button>
+            </>
           ) : listingItem.estado === "concretado" ? (
             <p className="m-4 font-semibold text-green-700">
               Este articulo ya fue donado

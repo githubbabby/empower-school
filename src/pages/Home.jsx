@@ -384,7 +384,7 @@ export default function Home() {
       const q = query(
         collection(db, "matches"),
         where("estado", "==", "match_donante"),
-        where("id_usuario", "==", uid),
+        where("id_representante", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -406,7 +406,7 @@ export default function Home() {
       const q = query(
         collection(db, "matches"),
         where("estado", "==", "match_aceptado"),
-        where("id_usuario", "==", uid),
+        where("id_donante", "==", uid),
         orderBy("fecha_creacion", "desc")
       );
       const querySnapshot = await getDocs(q);
@@ -590,7 +590,6 @@ export default function Home() {
     try {
       const q = query(
         collection(db, "pedidos"),
-        where("estado", "==", "pendiente"),
         orderBy("fecha_creacion", "asc")
       );
       const querySnapshot = await getDocs(q);
@@ -598,7 +597,8 @@ export default function Home() {
         querySnapshot.docs.map(async (doc) => {
           const listing = { id: doc.id, data: doc.data(), listingItems: [] };
           const listingItemsSnapshot = await getDocs(
-            collection(doc.ref, "articulos")
+            collection(doc.ref, "articulos"),
+            where("estado", "==", "pendiente")
           );
           listingItemsSnapshot.forEach((listingItemDoc) => {
             listing.listingItems.push({
@@ -692,8 +692,11 @@ export default function Home() {
       {userData.role === "schoolRep" && (
         <div className="mx-auto mt-6 max-w-full px-3">
           {matches.map((match, index) => (
-            <div className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg">
-              <div key={index} className="mb-4 w-full">
+            <div
+              key={index}
+              className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
+            >
+              <div className="mb-4 w-full">
                 <p className="text-md text-center font-semibold">
                   Tiene un nuevo donante interesado en ayudar a su escuela
                 </p>
@@ -821,15 +824,17 @@ export default function Home() {
             </h2>
             <ul className="mb-6 mt-6 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4">
               {filteredListings.map((listing) =>
-                listing.listingItems.map((item) => (
-                  <ListingCard
-                    key={item.id}
-                    id={item.id}
-                    listingItem={item.data}
-                    listingId={listing.id}
-                    listing={listing.data}
-                  />
-                ))
+                listing.listingItems
+                  .filter((item) => item.data.estado === "pendiente")
+                  .map((item) => (
+                    <ListingCard
+                      key={item.id}
+                      id={item.id}
+                      listingItem={item.data}
+                      listingId={listing.id}
+                      listing={listing.data}
+                    />
+                  ))
               )}
             </ul>
           </div>
