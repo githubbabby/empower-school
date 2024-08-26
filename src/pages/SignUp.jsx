@@ -11,6 +11,7 @@ import { db } from "../firebase.config";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,6 +22,7 @@ export default function SignUp() {
     role: "donor", // Default role is 'donor'
   });
   const { nombre, email, password, role } = formData;
+  const [hcaptchaToken, setHcaptchaToken] = useState(null);
   const navigate = useNavigate();
 
   function onChange(e) {
@@ -40,8 +42,16 @@ export default function SignUp() {
     }
   }
 
+  function onHcaptchaChange(token) {
+    setHcaptchaToken(token);
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
+    if (!hcaptchaToken) {
+      toast.error("Por favor, complete la verificación de captcha.");
+      return;
+    }
 
     try {
       const auth = getAuth();
@@ -161,6 +171,12 @@ export default function SignUp() {
               </p>
               <p></p>
             </div>
+            <HCaptcha
+              sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
+              onVerify={onHcaptchaChange}
+              className="mb-6"
+            />
+            <br />
             <button
               className="w-full rounded bg-red-600 px-4 py-2 font-medium uppercase text-white shadow-lg transition duration-200 ease-in-out hover:bg-red-700 hover:shadow-xl active:bg-red-900"
               type="submit"
