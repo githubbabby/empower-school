@@ -114,7 +114,7 @@ export default function SignIn() {
               </p>
             </div>
             <HCaptcha
-              sitekey={import.meta.env.HCAPTCHA_SITE_KEY}
+              sitekey={import.meta.env.VITE_HCAPTCHA_SITE_KEY}
               onVerify={onHcaptchaChange}
               className="mb-6"
             />
