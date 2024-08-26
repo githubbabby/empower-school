@@ -5,6 +5,7 @@ import OAuth from "../components/OAuth";
 import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +13,7 @@ export default function SignIn() {
     email: "",
     password: "",
   });
+  const [hcaptchaToken, setHcaptchaToken] = useState(null);
   const { email, password } = formData;
   const navigate = useNavigate();
 
@@ -21,8 +23,17 @@ export default function SignIn() {
       [e.target.id]: e.target.value,
     }));
   }
+
+  function onHcaptchaChange(token) {
+    setHcaptchaToken(token);
+  }
+
   async function onSubmit(e) {
     e.preventDefault();
+    if (!hcaptchaToken) {
+      toast.error("Por favor, complete el hCaptcha");
+      return;
+    }
     try {
       const auth = getAuth();
       const userCredentials = await signInWithEmailAndPassword(
@@ -38,6 +49,7 @@ export default function SignIn() {
       toast.error(error.message);
     }
   }
+
   return (
     <section>
       <h1 className="mt-6 text-center text-3xl font-extrabold">
@@ -101,6 +113,11 @@ export default function SignIn() {
                 </Link>
               </p>
             </div>
+            <HCaptcha
+              sitekey={import.meta.env.HCAPTCHA_SITE_KEY}
+              onVerify={onHcaptchaChange}
+              className="mb-6"
+            />
             <button
               className="w-full rounded bg-red-600 px-4 py-2 font-medium uppercase text-white shadow-lg transition duration-200 ease-in-out hover:bg-red-700 hover:shadow-xl active:bg-red-900"
               type="submit"
