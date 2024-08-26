@@ -18,8 +18,10 @@ import SchoolItem from "../components/SchoolItem";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
-import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
+import * as L from "leaflet";
+import "leaflet-defaulticon-compatibility";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -27,20 +29,6 @@ import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
 import ListingsList from "../components/ListingsList";
 import TableWithPagination from "../components/TableWithPagination";
-
-// Set the correct paths for the marker images
-const iconRetinaUrl = "/assets/marker-icon-2x.png";
-const iconUrl = "/assets/marker-icon.png";
-const shadowUrl = "/assets/marker-shadow.png";
-
-// Fix for default marker icon issue
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl,
-  iconUrl,
-  shadowUrl,
-});
 
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
