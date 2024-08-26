@@ -19,9 +19,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { MapContainer, TileLayer, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.webpack.css";
 import * as L from "leaflet";
-import "leaflet-defaulticon-compatibility";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -29,6 +27,17 @@ import ListingCard from "../components/ListingCard";
 import { Link } from "react-router-dom";
 import ListingsList from "../components/ListingsList";
 import TableWithPagination from "../components/TableWithPagination";
+import icon2X from "leaflet/dist/images/marker-icon-2x.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+const DefaultIcon = L.icon({
+  iconUrl: icon2X,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
 
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
