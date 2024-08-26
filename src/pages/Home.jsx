@@ -28,6 +28,20 @@ import { Link } from "react-router-dom";
 import ListingsList from "../components/ListingsList";
 import TableWithPagination from "../components/TableWithPagination";
 
+// Set the correct paths for the marker images
+const iconRetinaUrl = "/assets/marker-icon-2x.png";
+const iconUrl = "/assets/marker-icon.png";
+const shadowUrl = "/assets/marker-shadow.png";
+
+// Fix for default marker icon issue
+delete L.Icon.Default.prototype._getIconUrl;
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl,
+  iconUrl,
+  shadowUrl,
+});
+
 const calculateDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   const url = `https://routes.googleapis.com/directions/v2:computeRoutes?key=${
     import.meta.env.VITE_REACT_APP_GEOCODE_API_KEY
