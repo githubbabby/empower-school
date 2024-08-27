@@ -23,32 +23,44 @@ function App() {
         <Header />
         <Routes>
           <Route path="/" element={<Home />} />
+
+          {/* Protected Routes */}
           <Route path="/profile" element={<PrivateRoute />}>
-            <Route path="/profile" element={<Profile />} />
+            <Route index element={<Profile />} />
           </Route>
+
+          <Route path="/create-school" element={<PrivateRoute />}>
+            <Route index element={<CreateSchool />} />
+          </Route>
+
+          <Route path="/edit-school/:schoolId" element={<PrivateRoute />}>
+            <Route index element={<EditSchool />} />
+          </Route>
+
+          <Route
+            path="/create-listing/:schoolId/:instituteId"
+            element={<PrivateRoute />}
+          >
+            <Route index element={<CreateListing />} />
+          </Route>
+
+          <Route path="/edit-listing/:listingId" element={<PrivateRoute />}>
+            <Route index element={<EditListing />} />
+          </Route>
+
+          {/* Public Routes */}
           <Route path="/sign-in" element={<SignIn />} />
           <Route path="/sign-up" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/schools" element={<Schools />} />
-          <Route path="/create-school" element={<PrivateRoute />}>
-            <Route path="/create-school" element={<CreateSchool />} />
-          </Route>
-          <Route path="/edit-school" element={<PrivateRoute />}>
-            <Route path="/edit-school/:schoolId" element={<EditSchool />} />
-          </Route>
           <Route path="/school/:schoolId" element={<School />} />
-          <Route path="/create-listing" element={<PrivateRoute />}>
-            <Route path=":schoolId/:instituteId" element={<CreateListing />} />
-          </Route>
-          <Route path="/edit-listing" element={<PrivateRoute />}>
-            <Route path="/edit-listing/:listingId" element={<EditListing />} />
-          </Route>
           <Route
             path="/listing/:listingId/:listingItemId"
             element={<Listing />}
           />
         </Routes>
       </Router>
+
       <ToastContainer
         position="bottom-center"
         autoClose={5000}

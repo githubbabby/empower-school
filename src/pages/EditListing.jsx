@@ -109,6 +109,22 @@ export default function EditListing() {
     });
   }
 
+  async function handleDelete() {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este pedido?")) {
+      try {
+        setLoading(true);
+        const docRef = doc(db, "pedidos", params.listingId);
+        await deleteDoc(docRef);
+        setLoading(false);
+        toast.success("Pedido eliminado correctamente");
+        navigate("/");
+      } catch (error) {
+        setLoading(false);
+        toast.error(error.message);
+      }
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setLoading(true);
@@ -244,7 +260,7 @@ export default function EditListing() {
               <div className="mx-auto flex max-w-6xl items-center justify-between">
                 <p className="text-lg font-semibold">Nombre</p>
                 <button
-                  className="rounded-md bg-red-700 px-3 py-2 text-white focus:bg-red-500 focus:outline-none"
+                  className="rounded-md bg-red-700 px-3 py-2 font-extrabold text-white focus:bg-red-500 focus:outline-none"
                   type="button"
                   onClick={() =>
                     handleRemoveListingItem(listingItem.uid, index)
@@ -300,7 +316,7 @@ export default function EditListing() {
                 }}
                 className="mt-6 w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-              <p className="mt-6 text-lg font-semibold">Ingrediente</p>
+              <p className="mt-6 text-lg font-semibold">Tipo</p>
               {listingItem.categoria && (
                 <Select
                   options={breakfastlunchItems
@@ -336,7 +352,7 @@ export default function EditListing() {
           ))}
         </div>
         <button
-          className="mt-9 rounded-md bg-green-700 px-3 py-2 text-white focus:bg-green-500 focus:outline-none"
+          className="mt-9 rounded-md bg-green-700 px-3 py-2 font-extrabold text-white focus:bg-green-500 focus:outline-none"
           type="button"
           onClick={handleAddListingItem}
         >
@@ -345,9 +361,16 @@ export default function EditListing() {
         {/* Submit */}
         <button
           type="submit"
-          className="mb-6 mt-6 w-full rounded-md bg-blue-500 px-3 py-4 text-white focus:bg-blue-600 focus:outline-none"
+          className="mb-6 mt-6 w-full rounded-md bg-yellow-500 px-3 py-4 font-extrabold text-white focus:bg-yellow-600 focus:outline-none"
         >
           Editar
+        </button>
+        <button
+          type="button"
+          className="mb-6 mt-6 w-full rounded-md bg-red-500 px-3 py-4 font-extrabold text-white focus:bg-red-600 focus:outline-none"
+          onClick={handleDelete}
+        >
+          Borrar pedido
         </button>
       </form>
     </main>
