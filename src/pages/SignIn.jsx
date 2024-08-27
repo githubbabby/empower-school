@@ -73,7 +73,7 @@ export default function SignIn() {
               placeholder="Email"
               className="mb-6 w-full rounded border-gray-300 bg-white px-4 py-2 text-xl text-gray-700 transition ease-in-out"
             />
-            <div className="relative mb-6">
+            <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
                 id="password"
@@ -94,22 +94,22 @@ export default function SignIn() {
                 />
               )}
             </div>
-            <div className="flex justify-between gap-4 whitespace-nowrap text-sm sm:text-lg">
-              <p className="mb-6">
-                ¿No posee una cuenta?{" "}
-                <Link
-                  to="/sign-up"
-                  className="text-red-600 underline transition duration-200 ease-in-out hover:text-red-800"
-                >
-                  Registrarse
-                </Link>
-              </p>
+            <div className="mb-6 flex flex-col justify-between gap-4 whitespace-nowrap text-sm sm:flex-row sm:text-lg">
               <p>
                 <Link
                   to="/forgot-password"
                   className="transition duration-200 ease-in-out hover:text-blue-800 hover:underline"
                 >
                   ¿Olvidaste tu contraseña?
+                </Link>
+              </p>
+              <p>
+                ¿No posee una cuenta?{" "}
+                <Link
+                  to="/sign-up"
+                  className="text-red-600 underline transition duration-200 ease-in-out hover:text-red-800"
+                >
+                  Registrarse
                 </Link>
               </p>
             </div>
