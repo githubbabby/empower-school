@@ -705,7 +705,7 @@ export default function Home() {
           {matches.map((match, index) => (
             <div
               key={index}
-              className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
+              className="container mb-6 flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
             >
               <div className="mb-4 w-full">
                 <p className="text-md text-center font-semibold">
@@ -790,7 +790,7 @@ export default function Home() {
             {matches.map((match, index) => (
               <div
                 key={index}
-                className="container flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
+                className="container mb-6 flex max-w-xl flex-col items-center justify-center bg-white p-4 shadow-lg"
               >
                 <div className="mb-4 w-full">
                   <p className="text-md text-center font-semibold">
