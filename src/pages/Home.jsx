@@ -183,7 +183,7 @@ const MatchModal = ({
             <p>
               Telefono: {targetUserData.telefono}
               <a
-                href={`https://api.whatsapp.com/send?phone=${formatPhoneNumber(
+                href={`https://wa.me/${formatPhoneNumber(
                   targetUserData.telefono
                 )}`}
                 target="_blank"
