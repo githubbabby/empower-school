@@ -328,6 +328,7 @@ export default function Profile() {
               disabled={!isEditing}
               onChange={onChange}
               minLength={3}
+              required
               className={
                 "mb-6 w-full rounded border px-4 py-2 text-xl text-gray-700 transition ease-in-out" +
                 (isEditing
