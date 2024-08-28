@@ -110,7 +110,7 @@ const DistanceFilter = ({ distance, setDistance }) => (
       <option value={25}>25</option>
       <option value={50}>50</option>
       <option value={100}>100</option>
-      <option value={450}>200</option>
+      <option value={200}>200</option>
     </select>
     kilometros
   </span>
